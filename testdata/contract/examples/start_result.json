@@ -1,0 +1,34 @@
+{
+  "receipt_id": "rcp_00000000-0000-7000-8000-000000000100",
+  "session_id": "ses_00000000-0000-7000-8000-000000000100",
+  "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+  "turn_id": "turn_00000000-0000-7000-8000-000000000100",
+  "task_id": "tsk_00000000-0000-7000-8000-000000000100",
+  "run_id": "run_00000000-0000-7000-8000-000000000100",
+  "trace_id": "trc_00000000-0000-7000-8000-000000000100",
+  "effective_limits": {
+    "max_model_steps": 10,
+    "max_tool_calls_per_step": 8,
+    "deadline_seconds": 1800,
+    "max_capture_bytes": 67108864,
+    "max_generation_attempts": 32
+  },
+  "deadline_at": "2026-10-07T00:30:00Z",
+  "recovery_policy_revision": "db87835a3c36bf3f845441203fc0a5f90baa4d42bb05a7298935bdbef0edf0e9",
+  "intake": {
+    "receipt_id": "rcp_00000000-0000-7000-8000-000000000100",
+    "message_id": "msg_00000000-0000-7000-8000-000000000100",
+    "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+    "evidence_id": "evd_00000000-0000-7000-8000-000000000100",
+    "principal": "user:ren",
+    "entrypoint": "cli_interactive",
+    "caller_profile_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "declared_origin": "human",
+    "effective_origin": "human",
+    "proof_basis": "declared_local",
+    "proof_digest": null,
+    "accepted_sequence": 1,
+    "accepted_at": "2026-10-07T00:00:00Z"
+  },
+  "accepted": true
+}

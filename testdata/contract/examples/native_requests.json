@@ -1,0 +1,193 @@
+[
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000001",
+    "method": "initialize",
+    "params": {
+      "client_name": "rencrow-core",
+      "client_version": "fixture-0.2",
+      "protocol_version": "rencrow-harness/v1"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000002",
+    "method": "service/capabilities",
+    "params": {}
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000003",
+    "method": "session/open",
+    "params": {
+      "workspace_path": "/EXPLICIT_TEST_WORKSPACE",
+      "binding": {
+        "kind": "model_route",
+        "selector": "example-local-model--example-host",
+        "profile_revision": "fixture-profile-1",
+        "agent_id": null,
+        "execution_role": null
+      },
+      "policy_ref": "fixture-workspace-write",
+      "execution_mode": "trusted_host",
+      "idempotency_key": "fixture.session.open.0001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000004",
+    "method": "session/list",
+    "params": {
+      "cursor": null,
+      "limit": 20
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000005",
+    "method": "session/get",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000006",
+    "method": "session/fork",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "checkpoint_id": "ckp_00000000-0000-7000-8000-000000000001",
+      "idempotency_key": "fixture.session.fork.0001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000007",
+    "method": "turn/start",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "input": {
+        "text": "この隔離workspaceのテスト失敗を修正し、実際の検査結果を報告する。",
+        "origin_proof": null
+      },
+      "context_blocks": [],
+      "upstream": null,
+      "expected_context_revision": 0,
+      "expected_control_revision": 0,
+      "idempotency_key": "fixture.turn.start.0001",
+      "limits": {
+        "max_model_steps": 10,
+        "max_tool_calls_per_step": 8,
+        "deadline_seconds": 1800,
+        "max_capture_bytes": 67108864,
+        "max_generation_attempts": 32
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000008",
+    "method": "input/append",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "run_id": "run_00000000-0000-7000-8000-000000000001",
+      "input": {
+        "text": "制約は維持し、次にテストを実施する。",
+        "origin_proof": null
+      },
+      "disposition": "next_step",
+      "expected_control_revision": 0,
+      "idempotency_key": "fixture.input.append.0001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000009",
+    "method": "turn/interrupt",
+    "params": {
+      "run_id": "run_00000000-0000-7000-8000-000000000001",
+      "expected_control_revision": 0,
+      "idempotency_key": "fixture.turn.interrupt.0001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-00000000000a",
+    "method": "run/get",
+    "params": {
+      "run_id": "run_00000000-0000-7000-8000-000000000001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-00000000000b",
+    "method": "run/resume",
+    "params": {
+      "task_id": "tsk_00000000-0000-7000-8000-000000000001",
+      "expected_last_run_id": "run_00000000-0000-7000-8000-000000000001",
+      "checkpoint_id": "ckp_00000000-0000-7000-8000-000000000001",
+      "expected_control_revision": 1,
+      "binding": null,
+      "idempotency_key": "fixture.run.resume.0001",
+      "limits": {
+        "max_model_steps": 10,
+        "max_tool_calls_per_step": 8,
+        "deadline_seconds": 1800,
+        "max_capture_bytes": 67108864,
+        "max_generation_attempts": 32
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-00000000000c",
+    "method": "context/compact",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "expected_context_revision": 10,
+      "expected_control_revision": 0,
+      "dry_run": false,
+      "idempotency_key": "fixture.context.compact.0001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-00000000000d",
+    "method": "receipt/get",
+    "params": {
+      "receipt_id": "rcp_00000000-0000-7000-8000-000000000001"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-00000000000e",
+    "method": "events/read",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "after_seq": 0,
+      "limit": 100
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-00000000000f",
+    "method": "evidence/read",
+    "params": {
+      "evidence_id": "evd_00000000-0000-7000-8000-000000000001",
+      "projection_version": "text/v1",
+      "range": {
+        "start": 0,
+        "end": 1024
+      }
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req_00000000-0000-7000-8000-000000000010",
+    "method": "service/shutdown",
+    "params": {
+      "mode": "drain",
+      "deadline_seconds": 30
+    }
+  }
+]

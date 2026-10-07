@@ -1,0 +1,19 @@
+# Claudeへ渡す実装依頼
+
+このフォルダのSTART_HERE.mdから読み、RenCrow_Harness v0.2.2を実装してください。
+設計責任者はルミナ、実装・調査・試験担当はClaudeです。既存RenCrowリポジトリを参照できますが、内容を知っている前提にはしていません。REPOSITORY_MAPに読む場所とpinがあります。
+
+Gateway経由のみ、Go独立executable、CLI/CORE共通Service、Harness所有store、act最大2Attempt、Compaction各段1生成、CORE Context revision/Human relay供給、Resume全limits指定は決定済みです。ClaudeはWORK_ORDERのWP00から、許可されたCORE/LLM/profile側の変更も含めて実施してください。
+
+まずworktree/HEAD/dirtyと作業規約を読み、初回Qwen/MLXのengine前処理・計数source到達性を確認してください。resetや本番再起動はしないでください。LLM計数とstrict正常化を早期に着手し、Harness kernel/storeとCORE供給物は独立して進めてください。
+
+公開契約や安全保証を変える必要がある反証を見つけた場合は、source/実測、影響する試験、最小修正案をルミナへ返し、該当境界以外の作業を続けてください。単に未実装だから機能を削る、別モデルで代用する、レビューだけで完了することはしないでください。
+
+工程ごとに変更source、実行command、試験IDとactual result、未実施、blockerを報告してください。P6AはmacOSでCLI/CORE双方の先行受入、P6Bは三OSを含む正式完成です。P7旧Switch移行は依頼されたthreadがある場合だけ別途実施します。
+
+## v0.2.2最終確認への回答
+
+実装前照会17件にはIMPLEMENTATION_DECISIONSで設計回答済み。まずBYTE_CONTRACTSとexamples/wireの固定vectorを確認し、WP02/03/04を独立に進めてください。act=stream、各Attemptのmeasure→generate、Shiro明示profileの入口切替は決定事項です。モデル固有最終digestをHarnessで再構成しないでください。
+
+checks/validate_package.py、validate_contract_details.py、validate_wire_contracts.pyを実行し、続いて製品Goで同vectorを独立再現してください。参照Pythonの合格はGo/LLM/Tool/CORE経路の合格ではありません。
+

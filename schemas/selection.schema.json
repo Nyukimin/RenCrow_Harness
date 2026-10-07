@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Selection output v0.2",
+  "type": "object",
+  "required": [
+    "operations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "operations": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "target_handle": {
+                "type": "string",
+                "pattern": "^presented-[0-9]+$"
+              },
+              "target_quote": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              "operation": {
+                "const": "drop_superseded"
+              },
+              "basis": {
+                "enum": [
+                  "amendment",
+                  "revocation"
+                ]
+              },
+              "replacement_handle": {
+                "type": "string",
+                "pattern": "^presented-[0-9]+$"
+              },
+              "replacement_quote": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              }
+            },
+            "required": [
+              "target_handle",
+              "target_quote",
+              "operation",
+              "basis",
+              "replacement_handle",
+              "replacement_quote"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "target_handle": {
+                "type": "string",
+                "pattern": "^presented-[0-9]+$"
+              },
+              "target_quote": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              "operation": {
+                "const": "replace_completed"
+              },
+              "completion_handle": {
+                "type": "string",
+                "pattern": "^completion-[0-9]+$"
+              }
+            },
+            "required": [
+              "target_handle",
+              "target_quote",
+              "operation",
+              "completion_handle"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 512
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+  "input": {
+    "text": "この隔離workspaceのテスト失敗を修正し、実際の検査結果を報告する。",
+    "origin_proof": null
+  },
+  "context_blocks": [
+    {
+      "kind": "character_system_prompt",
+      "text": "作業を担当するAgentの説明。",
+      "revision": "ctx-v1:0c16740058508225e5436b9e87e3d77d0cb62901a24d0e6cdf90038522105a74",
+      "source": null
+    },
+    {
+      "kind": "stable_runtime_context",
+      "text": "実行許可はhost policyで決まる。",
+      "revision": "ctx-v1:ed5aeb1ec4d387051336ab9837f42db7035e28544ada721813a6ad4602b5ce3e",
+      "source": null
+    },
+    {
+      "kind": "recall_pack",
+      "text": "利用者が渡した過去情報の参照data。",
+      "revision": "ctx-v1:3c8add44b2f85b9ced51371e92df83c60c72ebbec1d3d69cd423b75fd6eac649",
+      "source": null
+    },
+    {
+      "kind": "variable_runtime_context",
+      "text": "現在のtask状況。",
+      "revision": "ctx-v1:e7c8bdddef5884a77cc3af7b990c5ef8d5d6d129972125f9219de3e633685aee",
+      "source": null
+    }
+  ],
+  "upstream": {
+    "owner": "RenCrow_CORE",
+    "task_id": "tsk_00000000-0000-7000-8000-000000000384",
+    "trace_id": "trc_00000000-0000-7000-8000-000000000384",
+    "session_id": "ses_00000000-0000-7000-8000-000000000384",
+    "thread_id": "thr_00000000-0000-7000-8000-000000000384",
+    "turn_id": "turn_00000000-0000-7000-8000-000000000384",
+    "action_id": "act_00000000-0000-7000-8000-000000000384",
+    "attempt_id": "att_00000000-0000-7000-8000-000000000384"
+  },
+  "expected_context_revision": 0,
+  "expected_control_revision": 0,
+  "idempotency_key": "fixture.turn.start.0001",
+  "limits": {
+    "max_model_steps": 10,
+    "max_tool_calls_per_step": 8,
+    "deadline_seconds": 1800,
+    "max_capture_bytes": 67108864,
+    "max_generation_attempts": 32
+  }
+}

@@ -1,0 +1,43 @@
+# Checkpoint保存形式とEmergency縮約
+
+RH-CHECKPOINT-001 / v0.2.2 / 設計: ルミナ / F02・F11〜14・F17
+schema: schemas/checkpoint.schema.json。serialization: BYTE_CONTRACTS§6。
+
+## 1. CheckpointCandidate
+
+全必須field: format_version、checkpoint_id、thread_id、task_id、run_id、parent_checkpoint_id、mode、expected、semantic_boundary、durable_boundary、snapshot_digest、retained_exact_refs、applied_selection、projection、observation_inventory、before_count、after_count。
+
+expected={context_revision,control_revision,writer_epoch,policy_revision,binding_revision}は**採用前**の値。commit後context_revisionはexactly +1。current pointerとreceipt/eventを同じDB transactionで更新する。checkpoint table.context_revisionは採用後値、candidate.expected.context_revisionは採用前値なので機械的同値比較しない。
+
+projection={format_version,context_blocks,summary,summary_anchor_sequence,important_observations,entries}。Model入力の正規投影はMODEL_PROJECTION。context_blocksには初期4区分のみ。retained Humanの原文はentriesのuser messageとSourceRef範囲へ対応し、text bytes一致を検証する。
+
+StoredSummary={source_checkpoint_id,summary,source_map}。Normalで新しいSummaryを採用する場合source_checkpoint_idは事前発行した今回checkpoint_id。Emergencyは最後のaccepted semantic checkpointのID/map/summaryをそのまま参照する。原本のlatest durable checkpointをsemantic sourceにすり替えない。summary=nullならanchor=null。
+
+observation_inventoryは累積検証情報であり、全部をact promptへ投入しない。important_observationsだけを表示する。used handleのsource_mapは参照に必要なSourceRefを持つ。raw source bytesとInput intake receiptsは別のsealed Evidenceにある。checkpointだけ存在して参照元がなければIntegrityBlocked。
+
+before_count/after_countは既に検証されたmeasure結果。renderはprojectionとその固定anchorだけを読み、count/candidate_hash/snapshot_digestをModel入力へ出さない。これによりafter_count.request_digestとcandidate_hashの循環を作らない。checkpoint IDはcandidate作成時に一度発行し、再serializeのたびに生成し直さない。
+
+Loadはprefix/version確認→strict JSON→CJ1再encode一致→schema→hash→source/metadata検証。改行/BOM/空白付きの別serializerのBLOBを「同じJSONだから」と採用しない。未知versionはunsupportedとして停止し、古いcheckpointへ自動fallbackしない。migrationは明示offline手順のみ。
+
+## 2. candidateの不変条件
+
+原文/権限/IDの照合、protected・進行中Toolの保持、全ToolCall/result対応、observationの原本取得可能性、retained_exact_refsとentriesの完全対応、Summary handle map、semantic/durable境界、全revision/fence、verified capacity/no-shrinkを検査する。schemaだけではこれらを証明しない。
+
+Normalのsemantic boundaryはSummaryへ提示・採用したWorkの末尾まで。Observationの処理状態は各rangeで別管理し、positionだけで全読扱いしない。Emergencyのsemantic boundary/StoredSummary/anchorは不変。forkは元checkpointのprovenanceを明示的にimportする別transactionで、snapshotを黙って同Threadへ巻戻さない。
+
+## 3. Emergencyの決定的手順
+
+1. 元のimmutable projectionとbefore_countを取得し、最後のaccepted Summary、未処理Work、保持Human、protected、call/result batchをそのままcloneする。Selection/新しい意味判定/新Summary生成は0回。
+2. 原本と照合済みでinactive・text-only・非protected・canonical sourceが一意のObservationSlotを列挙する。順序は(entry.sequence=context_seq, source.range.start, evidence_idのUTF-8順, message_offset)。原本の受付sequenceと適用context_seqを混同しない。同keyは一意でなければIntegrityBlocked。latest durableより前のexcerptも対象可。
+3. 各slotについて、seen_rangesへ以前に実提示した範囲をunionし、presented_ranges=[]、partial=trueにしたref-only markerをMODEL_PROJECTION§4でserializeする。summary_covered_rangesは変更しない。**marker全UTF-8 bytes < 元content全UTF-8 bytes**の場合だけ置換する。同長なら保持。markerの固定byte数を仮定しない。
+4. byte prefilterを通ったslotを全て置換する。途中でbudget内になったと推測して打ち切らない。role、tool_call_id、assistant側call/argumentsは変えない。Work、Human、summaryの削減は行わない。
+5. 一つの最終candidateをrenderし、全体のverified token countを取る。`after.upper < before.lower`か、exact前後比較による厳密縮小と、`after.upper<=usable_budget`の両方を要する。byteが小さいことだけでtoken縮小を主張しない。
+6. countが不確かならBUDGET_UNVERIFIED/unavailable。候補がない、tokenで縮小しない、または全部置換しても収まらないならCapacityBlocked。候補が成立した場合だけCAS commit。保存成否不明はRestartRequired。
+
+初回は個々のslotについてN回のremote計数をしない。全体before/afterと必要なPreflightを計数する。byte削減とtoken数が非単調になる場合も、後から別順序で探索するfallbackは行わない。最終候補不採用なら原stateを保持する。
+
+## 4. 検査例
+
+fixturesは元projection、期待marker全文、期待canonical candidate bytes/hash、復元したmessagesを持つ。純粋codec/投影の検査と、実tokenizerにおけるno-shrink検査を分ける。fixture中の合成token値で実Backend計数を合格にしない。候補内のhash、各count、SourceRefを1fieldずつ変えた負例、prefix/空白/BOMの変更拒否、old semantic境界の維持を試験する。
+
+no-shrinkはnormal/emergencyの圧縮採用条件であり、forkの条件ではない。forkは同じprojectionをコピーでき、token数が同じでもよい。forkでは元のcountが新しいThreadのbinding/入力と一致するかを検査し、変わった場合だけ再計数する。容量のfit条件・由来検証は省略しない。

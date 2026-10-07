@@ -1,0 +1,165 @@
+[
+  {
+    "status": "executed",
+    "outcome": "NormalCompacted",
+    "checkpoint_id": "ckp_00000000-0000-7000-8000-000000000002",
+    "before": {
+      "state": "verified_exact",
+      "prompt_lower": 2000,
+      "prompt_upper": 2000,
+      "context_limit": 8192,
+      "reserved_output_tokens": 1024,
+      "safety_margin_tokens": 256,
+      "request_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "normalization_fingerprint": "fixture-fingerprint",
+      "evidence_ref": "fixture-measure-before"
+    },
+    "after": {
+      "state": "verified_exact",
+      "prompt_lower": 1000,
+      "prompt_upper": 1000,
+      "context_limit": 8192,
+      "reserved_output_tokens": 1024,
+      "safety_margin_tokens": 256,
+      "request_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "normalization_fingerprint": "fixture-fingerprint",
+      "evidence_ref": "fixture-measure-after"
+    },
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": 20,
+    "durable_boundary": 20,
+    "error": null
+  },
+  {
+    "status": "executed",
+    "outcome": "EmergencyCompacted",
+    "checkpoint_id": "ckp_00000000-0000-7000-8000-000000000002",
+    "before": {
+      "state": "verified_exact",
+      "prompt_lower": 2000,
+      "prompt_upper": 2000,
+      "context_limit": 8192,
+      "reserved_output_tokens": 1024,
+      "safety_margin_tokens": 256,
+      "request_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "normalization_fingerprint": "fixture-fingerprint",
+      "evidence_ref": "fixture-measure-before"
+    },
+    "after": {
+      "state": "verified_exact",
+      "prompt_lower": 1000,
+      "prompt_upper": 1000,
+      "context_limit": 8192,
+      "reserved_output_tokens": 1024,
+      "safety_margin_tokens": 256,
+      "request_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "normalization_fingerprint": "fixture-fingerprint",
+      "evidence_ref": "fixture-measure-after"
+    },
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": 10,
+    "durable_boundary": 20,
+    "error": null
+  },
+  {
+    "status": "executed",
+    "outcome": "CapacityBlocked",
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": {
+      "code": "CAPACITY_BLOCKED",
+      "message": "合成試験例",
+      "retryable": false,
+      "evidence_id": null
+    }
+  },
+  {
+    "status": "executed",
+    "outcome": "IntegrityBlocked",
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": {
+      "code": "INTEGRITY_BLOCKED",
+      "message": "合成試験例",
+      "retryable": false,
+      "evidence_id": null
+    }
+  },
+  {
+    "status": "executed",
+    "outcome": "RestartRequired",
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": {
+      "code": "PERSISTENCE_UNCERTAIN",
+      "message": "合成試験例",
+      "retryable": false,
+      "evidence_id": null
+    }
+  },
+  {
+    "status": "cancelled",
+    "outcome": null,
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": null
+  },
+  {
+    "status": "stale",
+    "outcome": null,
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": null
+  },
+  {
+    "status": "unavailable",
+    "outcome": null,
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": null
+  },
+  {
+    "status": "dry_run",
+    "outcome": null,
+    "checkpoint_id": null,
+    "before": null,
+    "after": null,
+    "required_minimum_tokens": null,
+    "available_tokens": null,
+    "semantic_boundary": null,
+    "durable_boundary": null,
+    "error": null
+  }
+]

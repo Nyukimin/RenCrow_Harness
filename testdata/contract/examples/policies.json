@@ -1,0 +1,36 @@
+{
+  "format_version": "rencrow-policy-registry/v1",
+  "policies": [
+    {
+      "id": "fixture-workspace-write",
+      "allowed_modes": [
+        "structured_only",
+        "trusted_host"
+      ],
+      "tools": [
+        "file.read",
+        "file.search",
+        "file.create",
+        "file.edit",
+        "evidence.read"
+      ],
+      "read_prefixes": [
+        "."
+      ],
+      "write_prefixes": [
+        "."
+      ],
+      "process_profiles": [],
+      "env_profiles": [
+        "clean"
+      ],
+      "limits": {
+        "max_model_steps": 10,
+        "max_tool_calls_per_step": 8,
+        "deadline_seconds": 1800,
+        "max_capture_bytes": 67108864,
+        "max_generation_attempts": 32
+      }
+    }
+  ]
+}

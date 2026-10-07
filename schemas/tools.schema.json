@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Host-validated tool intent arguments",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "file.read"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "range": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65536
+            }
+          },
+          "required": [
+            "path",
+            "range",
+            "max_bytes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "file.search"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "query": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "mode": {
+              "enum": [
+                "literal",
+                "regex"
+              ]
+            },
+            "max_results": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "max_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65536
+            }
+          },
+          "required": [
+            "path",
+            "query",
+            "mode",
+            "max_results",
+            "max_bytes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "file.create"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 1048576
+            },
+            "expected_absent": {
+              "const": true
+            }
+          },
+          "required": [
+            "path",
+            "text",
+            "expected_absent"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "file.edit"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "expected_hash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "old_text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1048576
+            },
+            "new_text": {
+              "type": "string",
+              "maxLength": 1048576
+            }
+          },
+          "required": [
+            "path",
+            "expected_hash",
+            "old_text",
+            "new_text"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "process.exec"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "executable": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "argv": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "maxItems": 256
+            },
+            "cwd": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "env_profile_ref": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "timeout_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 86400
+            }
+          },
+          "required": [
+            "executable",
+            "argv",
+            "cwd",
+            "env_profile_ref",
+            "timeout_seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "evidence.read"
+        },
+        "arguments": {
+          "type": "object",
+          "properties": {
+            "evidence_id": {
+              "type": "string",
+              "pattern": "^evd_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            },
+            "projection_version": {
+              "enum": [
+                "raw/v1",
+                "text/v1"
+              ]
+            },
+            "range": {
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "evidence_id",
+            "projection_version",
+            "range"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "arguments"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

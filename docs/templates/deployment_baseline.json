@@ -1,0 +1,11 @@
+{
+  "reference_sources": [],
+  "manifest_source": {
+    "repository": "Nyukimin/RenCrow_EcoSystem",
+    "commit": "56c1f6078210c0cf9c3b4792a98491b3bc336fcc"
+  },
+  "manifest_switch_core_pin": "16ea1009da01f04354cdec329fe4b89dd3df7f61",
+  "observed_runtime": null,
+  "candidate_builds": [],
+  "verification_scope": "not_observed"
+}

@@ -1,0 +1,68 @@
+{
+  "scope": "design_asset_validation_only",
+  "runtime_implemented": false,
+  "runtime_tests_executed": false,
+  "checks": [
+    {
+      "check": "schema_metaschema",
+      "status": "passed",
+      "detail": 12
+    },
+    {
+      "check": "native_type_refs",
+      "status": "passed",
+      "detail": 71
+    },
+    {
+      "check": "all_native_methods_and_examples",
+      "status": "passed",
+      "detail": 16
+    },
+    {
+      "check": "negative_schema_fixtures",
+      "status": "passed",
+      "detail": 4
+    },
+    {
+      "check": "synthetic_handle_and_revocation_examples",
+      "status": "passed",
+      "detail": "schema-independent fixture check only"
+    },
+    {
+      "check": "bidirectional_traceability",
+      "status": "passed",
+      "detail": {
+        "tests": 97,
+        "functions": 40,
+        "requirements": 26,
+        "review_items": 40
+      }
+    },
+    {
+      "check": "sqlite_ddl_constraints",
+      "status": "passed",
+      "detail": {
+        "tables": 19,
+        "negative_constraints": 5,
+        "scope": "SQLite schema only; no Go/OS durability test"
+      }
+    },
+    {
+      "check": "local_document_links",
+      "status": "passed",
+      "detail": 96
+    },
+    {
+      "check": "all_json_syntax",
+      "status": "passed",
+      "detail": 71
+    }
+  ],
+  "limitations": [
+    "No product Go compilation or execution",
+    "No real Model/Tool E2E",
+    "No OS sandbox/durability/crash benchmark",
+    "No production changes",
+    "Schema and trace tests do not prove semantic correctness"
+  ]
+}

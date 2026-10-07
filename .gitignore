@@ -1,0 +1,54 @@
+# Go build artifacts
+/rencrow-harness
+/rencrow-harness.exe
+bin/
+dist/
+*.exe
+*.test
+*.out
+
+# Logs
+logs/
+*.log
+
+# Runtime data and local state (never committed)
+/data/
+/data_root/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Temporary, coverage and profiling output
+tmp/
+coverage.*
+*.cover
+*.prof
+*.pprof
+
+# Secrets and local configuration
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+/config.local.json
+.claude/settings.local.json
+.claude/.cc-writes/
+
+# Python (document checks only)
+__pycache__/
+*.pyc
+.venv/
+
+# Generated reading bundle (rebuild with tools/speccheck/rebuild_bundle.py)
+/docs/IMPLEMENTER_BUNDLE.md
+
+# OS / editor
+.DS_Store

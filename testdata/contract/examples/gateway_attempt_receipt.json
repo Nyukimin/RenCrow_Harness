@@ -1,0 +1,18 @@
+{
+  "stage": "act",
+  "binding_fingerprint": "fixture-binding-v1",
+  "request_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+  "backend_attempts": 1,
+  "generation_state": "terminal",
+  "recovery_profile": "terminal_output_once",
+  "recovery_profile_revision": "qwen-terminal-output-v1",
+  "applied_transformations": [
+    "format_suffix",
+    "thinking_disabled"
+  ],
+  "usage_complete": true,
+  "contract_version": "harness-v1",
+  "logical_requests": 1,
+  "hidden_retry": false,
+  "input_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+}

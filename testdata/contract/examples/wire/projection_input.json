@@ -1,0 +1,218 @@
+{
+  "format_version": "rencrow-act-projection/v1",
+  "context_blocks": [
+    {
+      "kind": "stable_runtime_context",
+      "text": "原本は変更しない。",
+      "revision": "ctx-v1:94abdabc08f04651e063084356d158f6f7b51b6efa4dd8641c04941e0c19d602",
+      "source": null
+    }
+  ],
+  "summary": {
+    "source_checkpoint_id": "ckp_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0008",
+    "summary": {
+      "current_work": [
+        {
+          "text": "保存処理を実装中。",
+          "source_handles": [
+            "work-0"
+          ]
+        }
+      ],
+      "decisions": [],
+      "verification": [
+        {
+          "text": "再開試験は未実施。",
+          "state": "not_run",
+          "source_handles": [
+            "work-0"
+          ]
+        }
+      ],
+      "open_items": [
+        {
+          "text": "再開試験",
+          "source_handles": [
+            "work-0"
+          ]
+        }
+      ],
+      "next_steps": [],
+      "important_observation_handles": []
+    },
+    "source_map": [
+      {
+        "handle": "work-0",
+        "sources": [
+          {
+            "owner": "RenCrow_Harness",
+            "source_id": "evd_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0007",
+            "raw_hash": "432a3c7e12b77ad621ef4a7db047ad50f7a3cd53373ea1443964bbaad7090a5a",
+            "projection_version": "text/v1",
+            "range": {
+              "start": 0,
+              "end": 54
+            },
+            "origin": "agent",
+            "sequence": 2
+          }
+        ]
+      }
+    ]
+  },
+  "summary_anchor_sequence": 2,
+  "important_observations": [],
+  "entries": [
+    {
+      "kind": "instruction",
+      "sequence": 1,
+      "origin": "human",
+      "messages": [
+        {
+          "role": "user",
+          "content": "ログは削除しない。\n"
+        }
+      ],
+      "message_sources": [
+        [
+          {
+            "owner": "RenCrow_Harness",
+            "source_id": "evd_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0001",
+            "raw_hash": "34085cbe42e3def6b7bde66cb29e6b7d036d599f1ad10071e1e0d11323e576ce",
+            "projection_version": "text/v1",
+            "range": {
+              "start": 0,
+              "end": 28
+            },
+            "origin": "human",
+            "sequence": 1
+          }
+        ]
+      ],
+      "observations": [],
+      "protected": false
+    },
+    {
+      "kind": "tool_exchange",
+      "sequence": 4,
+      "origin": "tool",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "fixture-call-1",
+              "type": "function",
+              "function": {
+                "name": "process.exec",
+                "arguments": "{\"executable\":\"/fixture/tool\",\"argv\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "fixture-call-1",
+          "content": "fixture-log:abc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\nabc日本語\n"
+        }
+      ],
+      "message_sources": [
+        [
+          {
+            "owner": "RenCrow_Harness",
+            "source_id": "evd_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0003",
+            "raw_hash": "d3bc37ec7e52516a70192ab5766d64a52c260cd2deca7da608970d728753299f",
+            "projection_version": "text/v1",
+            "range": {
+              "start": 0,
+              "end": 40
+            },
+            "origin": "agent",
+            "sequence": 3
+          }
+        ],
+        [
+          {
+            "owner": "RenCrow_Harness",
+            "source_id": "evd_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0004",
+            "raw_hash": "64786fdb672452374d972b93360f9721d4ae0119b73cca8796d1171102db2452",
+            "projection_version": "text/v1",
+            "range": {
+              "start": 0,
+              "end": 11712
+            },
+            "origin": "tool",
+            "sequence": 4
+          }
+        ]
+      ],
+      "observations": [
+        {
+          "message_offset": 1,
+          "reference": {
+            "format_version": "rencrow-observation-reference/v1",
+            "provider_tool_call_id": "fixture-call-1",
+            "tool": "process.exec",
+            "evidence_id": "evd_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0004",
+            "projection_version": "text/v1",
+            "raw_hash": "64786fdb672452374d972b93360f9721d4ae0119b73cca8796d1171102db2452",
+            "projection_hash": "64786fdb672452374d972b93360f9721d4ae0119b73cca8796d1171102db2452",
+            "total_bytes": 11712,
+            "capture_complete": true,
+            "presented_ranges": [
+              {
+                "start": 0,
+                "end": 11712
+              }
+            ],
+            "seen_ranges": [
+              {
+                "start": 0,
+                "end": 11712
+              }
+            ],
+            "summary_covered_ranges": [],
+            "partial": false,
+            "retrieval": {
+              "tool": "evidence.read",
+              "max_bytes": 65536
+            }
+          },
+          "eligible": true
+        }
+      ],
+      "protected": false
+    },
+    {
+      "kind": "work",
+      "sequence": 5,
+      "origin": "agent",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": "再開試験は未実施。",
+          "tool_calls": []
+        }
+      ],
+      "message_sources": [
+        [
+          {
+            "owner": "RenCrow_Harness",
+            "source_id": "evd_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0002",
+            "raw_hash": "065a3c1013796bb6b284470ae1cd0f94f34af7be0dfa5f572df21953ec96d7b6",
+            "projection_version": "text/v1",
+            "range": {
+              "start": 0,
+              "end": 27
+            },
+            "origin": "agent",
+            "sequence": 5
+          }
+        ]
+      ],
+      "observations": [],
+      "protected": false
+    }
+  ]
+}

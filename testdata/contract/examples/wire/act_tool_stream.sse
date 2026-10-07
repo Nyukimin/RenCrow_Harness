@@ -1,0 +1,11 @@
+data: {"choices":[{"delta":{"role":"assistant","tool_calls":[{"function":{"arguments":"{\"path\":","name":"file.read"},"id":"fixture-read-1","index":0,"type":"function"}]},"finish_reason":null,"index":0}],"id":"fixture-chat-1"}
+
+data: {"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"\"demo.txt\"}"},"index":0}]},"finish_reason":null,"index":0}],"id":"fixture-chat-1"}
+
+data: {"choices":[{"delta":{},"finish_reason":"tool_calls","index":0}],"id":"fixture-chat-1"}
+
+event: rencrow.terminal
+data: {"code":null,"contract_version":"harness-v1","finish_reason":"tool_calls","harness_receipt":{"applied_transformations":[],"backend_attempts":1,"binding_fingerprint":"bfp-v1:cf25685e3cbff5f9364f8bdadb54d8b852578931ad2602a62e077613b3a6ef8d","contract_version":"harness-v1","generation_state":"terminal","hidden_retry":false,"input_digest":"9a0742630d64d3fc648f24a0d92b22362e17d40af325efb2196396481599615c","logical_requests":1,"recovery_profile":"same_request","recovery_profile_revision":"builtin-v1","request_digest":"fec1d0c41d2ece109a38e21c9c10d4a6598e169292515aaae4eaa12739a5a88a","stage":"act","usage_complete":true},"outcome":"completed","provider_response_id":"fixture-chat-1","usage":{"cached_tokens":null,"completion_tokens":20,"prompt_tokens":8000}}
+
+data: [DONE]
+

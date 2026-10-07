@@ -1,0 +1,82 @@
+{
+  "config_version": "rencrow-harness-config/v1",
+  "data_root": "/EXPLICIT_PRIVATE_HARNESS_DATA",
+  "gateway": {
+    "base_url": "http://127.0.0.1:8090/v1",
+    "required_contract": "harness-v1"
+  },
+  "caller": {
+    "principal": "user:ren",
+    "default_origin": "human",
+    "readable_session_owners": [
+      "user:ren",
+      "core:local"
+    ],
+    "controllable_session_owners": [
+      "user:ren",
+      "core:local"
+    ],
+    "relay_issuers": []
+  },
+  "workspaces": [
+    {
+      "root": "/EXPLICIT_TEST_WORKSPACE",
+      "allowed_modes": [
+        "structured_only",
+        "trusted_host"
+      ],
+      "policy_ref": "fixture-workspace-write"
+    }
+  ],
+  "bindings": [
+    {
+      "profile_name": "fixture-local",
+      "binding": {
+        "kind": "model_route",
+        "selector": "example-local-model--example-host",
+        "profile_revision": "fixture-profile-1",
+        "agent_id": null,
+        "execution_role": null
+      }
+    }
+  ],
+  "process_profiles": [],
+  "limits": {
+    "max_model_steps": 10,
+    "max_tool_calls_per_step": 8,
+    "deadline_seconds": 1800,
+    "max_capture_bytes": 67108864,
+    "max_generation_attempts": 32
+  },
+  "compaction": {
+    "enabled": true,
+    "trigger_ratio": 0.85,
+    "safety_margin_tokens": 2048,
+    "max_logical_stage_requests": 2
+  },
+  "storage": {
+    "max_database_bytes": 10737418240,
+    "backup_root": "/EXPLICIT_PRIVATE_HARNESS_BACKUP"
+  },
+  "recovery": {
+    "contract_version": "act-recovery/v1",
+    "max_attempts_per_act": 2,
+    "allowed_profiles": [
+      "same_request",
+      "terminal_output_once"
+    ]
+  },
+  "policy_registry_path": "/EXPLICIT_PRIVATE_CONFIG/policies.json",
+  "env_profiles": [
+    {
+      "name": "clean",
+      "values": {}
+    }
+  ],
+  "extensions": {
+    "enabled": false,
+    "trusted_workspace_roots": [],
+    "skill_roots": [],
+    "hooks": []
+  }
+}

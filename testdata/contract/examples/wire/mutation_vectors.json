@@ -1,0 +1,112 @@
+[
+  {
+    "method": "session/open",
+    "principal": "core:local",
+    "params": {
+      "workspace_path": "/EXPLICIT_TEST_WORKSPACE",
+      "binding": {
+        "kind": "model_route",
+        "selector": "example-local-model--example-host",
+        "profile_revision": "fixture-profile-1",
+        "agent_id": null,
+        "execution_role": null
+      },
+      "policy_ref": "fixture-workspace-write",
+      "execution_mode": "trusted_host",
+      "idempotency_key": "fixture.session.open.0001"
+    },
+    "expected_hash": "5c67ca12953af6df5cdf57a5063448d79b54d2e66d2d2447fcf202d49978ae95"
+  },
+  {
+    "method": "session/fork",
+    "principal": "core:local",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "checkpoint_id": "ckp_00000000-0000-7000-8000-000000000001",
+      "idempotency_key": "fixture.session.fork.0001"
+    },
+    "expected_hash": "fb387f4150b609509df0bbfc72d77750afb7f7646e011fcbace68aca764641ae"
+  },
+  {
+    "method": "turn/start",
+    "principal": "core:local",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "input": {
+        "text": "この隔離workspaceのテスト失敗を修正し、実際の検査結果を報告する。",
+        "origin_proof": null
+      },
+      "context_blocks": [],
+      "upstream": null,
+      "expected_context_revision": 0,
+      "expected_control_revision": 0,
+      "idempotency_key": "fixture.turn.start.0001",
+      "limits": {
+        "max_model_steps": 10,
+        "max_tool_calls_per_step": 8,
+        "deadline_seconds": 1800,
+        "max_capture_bytes": 67108864,
+        "max_generation_attempts": 32
+      }
+    },
+    "expected_hash": "d452ef30b868d63475e47e958fc5bc6c87b0665d9b104ceda7235bffaefc66d8"
+  },
+  {
+    "method": "input/append",
+    "principal": "core:local",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "run_id": "run_00000000-0000-7000-8000-000000000001",
+      "input": {
+        "text": "制約は維持し、次にテストを実施する。",
+        "origin_proof": null
+      },
+      "disposition": "next_step",
+      "expected_control_revision": 0,
+      "idempotency_key": "fixture.input.append.0001"
+    },
+    "expected_hash": "0f3fba7eb69f36803d6839be9a7d4b3b570957f6fb705b8554ff29453b6d9baa"
+  },
+  {
+    "method": "turn/interrupt",
+    "principal": "core:local",
+    "params": {
+      "run_id": "run_00000000-0000-7000-8000-000000000001",
+      "expected_control_revision": 0,
+      "idempotency_key": "fixture.turn.interrupt.0001"
+    },
+    "expected_hash": "acefbbf0aca8389a5db72a34c0505c2b8ceee45393dea68d2224307e462e31f5"
+  },
+  {
+    "method": "run/resume",
+    "principal": "core:local",
+    "params": {
+      "task_id": "tsk_00000000-0000-7000-8000-000000000001",
+      "expected_last_run_id": "run_00000000-0000-7000-8000-000000000001",
+      "checkpoint_id": "ckp_00000000-0000-7000-8000-000000000001",
+      "expected_control_revision": 1,
+      "binding": null,
+      "idempotency_key": "fixture.run.resume.0001",
+      "limits": {
+        "max_model_steps": 10,
+        "max_tool_calls_per_step": 8,
+        "deadline_seconds": 1800,
+        "max_capture_bytes": 67108864,
+        "max_generation_attempts": 32
+      }
+    },
+    "expected_hash": "5c024b2db4fa337bfb3db45c1d48b69fbf9eb2659549951b9551f2b5b8c272ea"
+  },
+  {
+    "method": "context/compact",
+    "principal": "core:local",
+    "params": {
+      "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+      "expected_context_revision": 10,
+      "expected_control_revision": 0,
+      "dry_run": false,
+      "idempotency_key": "fixture.context.compact.0001"
+    },
+    "expected_hash": "9fed134cb6aeb4f15405450f957fe110010a6a1b829ae4f5c37dc7cefd92fdba"
+  }
+]

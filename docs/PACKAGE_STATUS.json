@@ -1,0 +1,16 @@
+{
+  "version": "0.2.2",
+  "date_jst": "2026-10-07",
+  "design_owner": "ルミナ",
+  "implementation_owner": "Claude",
+  "status": "design_instruction_issued",
+  "runtime_implemented": false,
+  "runtime_tests_executed": false,
+  "repositories_modified": false,
+  "deployed": false,
+  "runtime_test_count": 97,
+  "function_count": 40,
+  "requirement_count": 26,
+  "public_api_method_count": 16,
+  "final_review_items_resolved_in_design": 17
+}

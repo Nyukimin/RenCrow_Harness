@@ -1,0 +1,12 @@
+{
+  "decision_id": "AD-00",
+  "affected_boundary": "",
+  "observed_fact": "",
+  "source_commit_path_lines": [],
+  "reproduction_evidence": [],
+  "violated_acceptance_ids": [],
+  "minimal_design_change_proposal": "",
+  "unaffected_work_to_continue": [],
+  "design_owner": "ルミナ",
+  "resolution": "awaiting_design_decision_not_runtime_gate"
+}

@@ -1,0 +1,92 @@
+{
+  "scope": "wire_and_projection_design_asset_checks",
+  "version": "0.2.2",
+  "runtime_implemented": false,
+  "runtime_tests_executed": false,
+  "checks": [
+    {
+      "check": "cj1_exact_bytes_and_negative_inputs",
+      "status": "passed",
+      "detail": {
+        "positive_vectors": 12,
+        "negative_cases": 13
+      }
+    },
+    {
+      "check": "request_digest_ownership_and_field_selection",
+      "status": "passed",
+      "detail": {
+        "positive_request_sets": 1,
+        "metadata_exclusions": 9,
+        "included_mutations": 7,
+        "schema_rejections": 3,
+        "final_input_owned_by": "RenCrow_LLM"
+      }
+    },
+    {
+      "check": "native_mutation_and_caller_key_contract",
+      "status": "passed",
+      "detail": {
+        "mutation_vectors": 7,
+        "principal_positive": 3,
+        "principal_negative": 7,
+        "keyfile_negative": 7
+      }
+    },
+    {
+      "check": "stage_shapes_utf8_splits_and_no_tools_messages",
+      "status": "passed",
+      "detail": {
+        "datasets": 2,
+        "split_vectors": 5,
+        "negative_cases": 5
+      }
+    },
+    {
+      "check": "context_projection_emergency_and_checkpoint_bytes",
+      "status": "passed",
+      "detail": {
+        "projection_messages": 8,
+        "emergency_changes": 1,
+        "noncanonical_checkpoint_rejections": 4,
+        "actual_tokenization": false
+      }
+    },
+    {
+      "check": "gateway_error_evidence_and_receipt_state",
+      "status": "passed",
+      "detail": {
+        "error_cases": 13,
+        "source_codes": 25,
+        "receipt_positive": 3,
+        "receipt_negative": 3
+      }
+    },
+    {
+      "check": "strict_stream_argument_assembly_and_terminal_gate",
+      "status": "passed",
+      "detail": {
+        "positive_streams": 2,
+        "negative_streams": 7,
+        "length_rejects_all_tools": true,
+        "tool_execution_performed": false
+      }
+    },
+    {
+      "check": "all_event_payloads_and_host_assets",
+      "status": "passed",
+      "detail": {
+        "event_types": 15,
+        "event_schema_negative": 30,
+        "asset_positive": 4,
+        "asset_negative": 4
+      }
+    }
+  ],
+  "limitations": [
+    "No product Go build or network execution",
+    "No real tokenizer/LLM generation or performance measurement",
+    "No actual CORE routing, OS isolation, durability or production deployment",
+    "Synthetic expected vectors check byte/projection contracts, not semantic correctness or empirical recovery rates"
+  ]
+}

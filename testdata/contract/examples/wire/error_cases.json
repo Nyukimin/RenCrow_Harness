@@ -1,0 +1,96 @@
+{
+  "preconditions": "act ordinal0, finite remaining budget/time, unchanged control/binding, no Tool dispatched",
+  "cases": [
+    {
+      "source_code": "CAPACITY_EXCEEDED",
+      "proof": "not_dispatched",
+      "expected_code": "QUEUE_TIMEOUT",
+      "expected_generation_state": "not_started",
+      "expected_retry": true
+    },
+    {
+      "source_code": "TARGET_FIRST_OUTPUT_TIMEOUT",
+      "proof": "none",
+      "expected_code": "MODEL_GENERATION_OUTCOME_UNKNOWN",
+      "expected_generation_state": "unknown",
+      "expected_retry": false
+    },
+    {
+      "source_code": "TARGET_FIRST_OUTPUT_TIMEOUT",
+      "proof": "runtime_stopped",
+      "expected_code": "UPSTREAM_TRANSIENT",
+      "expected_generation_state": "terminal",
+      "expected_retry": true
+    },
+    {
+      "source_code": "DEGENERATE_OUTPUT",
+      "proof": "runtime_stopped",
+      "expected_code": "MODEL_OUTPUT_DEGENERATE",
+      "expected_generation_state": "terminal",
+      "expected_retry": false
+    },
+    {
+      "source_code": "DEGENERATE_OUTPUT",
+      "proof": "none",
+      "expected_code": "MODEL_GENERATION_OUTCOME_UNKNOWN",
+      "expected_generation_state": "unknown",
+      "expected_retry": false
+    },
+    {
+      "source_code": "NORMALIZATION_ERROR",
+      "proof": "terminal_schema_violation",
+      "expected_code": "MODEL_OUTPUT_SCHEMA_INVALID",
+      "expected_generation_state": "terminal",
+      "expected_retry": true
+    },
+    {
+      "source_code": "NORMALIZATION_ERROR",
+      "proof": "normalizer_defect",
+      "expected_code": "MODEL_CONTRACT_FAILED",
+      "expected_generation_state": "not_started",
+      "expected_retry": false
+    },
+    {
+      "source_code": "MODEL_NOT_ALIVE",
+      "proof": "not_dispatched",
+      "expected_code": "MODEL_UNAVAILABLE",
+      "expected_generation_state": "not_started",
+      "expected_retry": false
+    },
+    {
+      "source_code": "REASONING_ONLY",
+      "proof": "terminal",
+      "expected_code": "REASONING_ONLY",
+      "expected_generation_state": "terminal",
+      "expected_retry": true
+    },
+    {
+      "source_code": "RAW_TOOL_MARKUP",
+      "proof": "none",
+      "expected_code": "MODEL_GENERATION_OUTCOME_UNKNOWN",
+      "expected_generation_state": "unknown",
+      "expected_retry": false
+    },
+    {
+      "source_code": "TARGET_UNAVAILABLE",
+      "proof": "not_dispatched",
+      "expected_code": "CONNECT_FAILED",
+      "expected_generation_state": "not_started",
+      "expected_retry": true
+    },
+    {
+      "source_code": "TARGET_UNAVAILABLE",
+      "proof": "runtime_stopped",
+      "expected_code": "UPSTREAM_TRANSIENT",
+      "expected_generation_state": "terminal",
+      "expected_retry": true
+    },
+    {
+      "source_code": "UNKNOWN_FUTURE_CODE",
+      "proof": "not_dispatched",
+      "expected_code": "MODEL_CONTRACT_FAILED",
+      "expected_generation_state": "not_started",
+      "expected_retry": false
+    }
+  ]
+}

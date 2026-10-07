@@ -1,0 +1,102 @@
+{
+  "version": "rencrow-harness/v1",
+  "status": "proposed_not_implemented",
+  "methods": [
+    {
+      "method": "initialize",
+      "input_type": "InitializeInput",
+      "result_type": "CapabilitiesResult",
+      "description": "初期handshake。client名は認証にしない。"
+    },
+    {
+      "method": "service/capabilities",
+      "input_type": "EmptyInput",
+      "result_type": "CapabilitiesResult",
+      "description": "利用可能な実装/接続/予算の状態。"
+    },
+    {
+      "method": "session/open",
+      "input_type": "SessionOpenInput",
+      "result_type": "SessionOpenResult",
+      "description": "新Session/Threadをdurable作成。Model生成なし。"
+    },
+    {
+      "method": "session/list",
+      "input_type": "SessionListInput",
+      "result_type": "SessionListResult",
+      "description": "callerが読めるSessionのみ。"
+    },
+    {
+      "method": "session/get",
+      "input_type": "SessionGetInput",
+      "result_type": "SessionInfo",
+      "description": "同じownerの現在metadata。"
+    },
+    {
+      "method": "session/fork",
+      "input_type": "SessionForkInput",
+      "result_type": "ForkResult",
+      "description": "確定checkpointから別Thread。filesystem復元なし。"
+    },
+    {
+      "method": "turn/start",
+      "input_type": "StartInput",
+      "result_type": "StartResult",
+      "description": "新Turn/Task/Run受付。作業完了ではない。"
+    },
+    {
+      "method": "input/append",
+      "input_type": "InputAppendInput",
+      "result_type": "InputReceipt",
+      "description": "追記の分類をdurable保存。"
+    },
+    {
+      "method": "turn/interrupt",
+      "input_type": "InterruptInput",
+      "result_type": "InterruptReceipt",
+      "description": "停止信号を記録。外部停止完了とは別。"
+    },
+    {
+      "method": "run/get",
+      "input_type": "RunGetInput",
+      "result_type": "RunInfo",
+      "description": "現在phaseまたは7分類の確定RunResult。"
+    },
+    {
+      "method": "run/resume",
+      "input_type": "ResumeInput",
+      "result_type": "ResumeResult",
+      "description": "同Taskに新Run/Trace。replayの後だけ実行。"
+    },
+    {
+      "method": "context/compact",
+      "input_type": "CompactInput",
+      "result_type": "OperationAccepted",
+      "description": "idle Threadのmanual compact。receiptで結果取得。"
+    },
+    {
+      "method": "receipt/get",
+      "input_type": "ReceiptGetInput",
+      "result_type": "ReceiptRecord",
+      "description": "応答消失後も同operationの結果を読む。"
+    },
+    {
+      "method": "events/read",
+      "input_type": "EventsReadInput",
+      "result_type": "EventsReadResult",
+      "description": "確定eventの再取得。provisionalは含まない。"
+    },
+    {
+      "method": "evidence/read",
+      "input_type": "EvidenceReadInput",
+      "result_type": "EvidenceReadResult",
+      "description": "最大64KiBの原本/投影範囲。元Toolを実行しない。"
+    },
+    {
+      "method": "service/shutdown",
+      "input_type": "ShutdownInput",
+      "result_type": "ShutdownResult",
+      "description": "新規受付停止。drain/cancelと有限deadline。"
+    }
+  ]
+}

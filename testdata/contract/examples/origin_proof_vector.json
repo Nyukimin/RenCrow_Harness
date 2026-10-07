@@ -1,0 +1,22 @@
+{
+  "scope": "synthetic_vector_only_never_deploy_fixture_key",
+  "key_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+  "text": "この隔離workspaceのテスト失敗を修正し、実際の検査結果を報告する。",
+  "proof": {
+    "issuer": "core:fixture",
+    "key_id": "fixture-key-1",
+    "audience": "core:local",
+    "origin": "human",
+    "source_message_id": "msg_00000000-0000-7000-8000-000000000101",
+    "source_thread_id": "thr_00000000-0000-7000-8000-000000000101",
+    "destination_thread_id": "thr_00000000-0000-7000-8000-000000000001",
+    "mutation_key": "fixture.turn.start.0001",
+    "raw_hash": "5eba7f706ae54dc35ff984acac2be22f04c257a958a1af6722ac29ca29aabf8d",
+    "sequence": 1,
+    "issued_at": "2026-10-07T00:00:00Z",
+    "expires_at": "2026-10-07T00:05:00Z",
+    "nonce": "fixture-nonce-00000001",
+    "mac": "80123e0116cc3d5baa2146b25ba225c9dd008bbcc5b247bdfb005035cc956a87"
+  },
+  "mac_input_sha256": "5c5686e129fb1a8fdff4a93c1ba5930c41b49e67cc41bf3aa22db4b837247bc9"
+}

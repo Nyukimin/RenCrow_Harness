@@ -1,0 +1,24 @@
+{
+  "format_version": "rencrow-selection-data/v1",
+  "presented_sources": [
+    {
+      "handle": "presented-0",
+      "origin": "human",
+      "sequence": 0,
+      "chunk_index": 0,
+      "chunk_count": 1,
+      "text": "方式Aを実装する。",
+      "continuing_constraint": false
+    },
+    {
+      "handle": "presented-1",
+      "origin": "human",
+      "sequence": 1,
+      "chunk_index": 0,
+      "chunk_count": 1,
+      "text": "方式Aはやめる。",
+      "continuing_constraint": false
+    }
+  ],
+  "completion_links": []
+}

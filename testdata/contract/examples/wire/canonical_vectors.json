@@ -1,0 +1,98 @@
+{
+  "contract": "CJ1",
+  "positive": [
+    {
+      "name": "order-and-nulls",
+      "input_json": "{\"z\":null,\"b\":[],\"a\":{},\"c\":\"\"}",
+      "expected_cj_utf8": "{\"a\":{},\"b\":[],\"c\":\"\",\"z\":null}",
+      "expected_cj_hex": "7b2261223a7b7d2c2262223a5b5d2c2263223a22222c227a223a6e756c6c7d",
+      "expected_sha256": "e076e3707dd93a26cf7bece3c2de42e3c12999e99f2493c50b8dfbb63ec4858c"
+    },
+    {
+      "name": "numeric",
+      "input_json": "{\"x\":1.2300e2,\"z\":-0.00,\"a\":1e-3}",
+      "expected_cj_utf8": "{\"a\":0.001,\"x\":123,\"z\":0}",
+      "expected_cj_hex": "7b2261223a302e3030312c2278223a3132332c227a223a307d",
+      "expected_sha256": "aeefb7fd5ec6ee75177b0612fda074317952962824f7288c5f05151803390ba5"
+    },
+    {
+      "name": "large-number",
+      "input_json": "{\"a\":9007199254740993,\"b\":1.0000000000000000001}",
+      "expected_cj_utf8": "{\"a\":9007199254740993,\"b\":1.0000000000000000001}",
+      "expected_cj_hex": "7b2261223a393030373139393235343734303939332c2262223a312e303030303030303030303030303030303030317d",
+      "expected_sha256": "c2412518fba62061becb9f029cf6f180aee8ed98e90c252fd163fd965bcf0d13"
+    },
+    {
+      "name": "text",
+      "input_json": "{\"t\":\"日本語\\n<>&/\\t\"}",
+      "expected_cj_utf8": "{\"t\":\"日本語\\u000a<>&/\\u0009\"}",
+      "expected_cj_hex": "7b2274223a22e697a5e69cace8aa9e5c75303030613c3e262f5c7530303039227d",
+      "expected_sha256": "8f6e38d0e120b632cb923dd28ec906c75fed2a685de7a184ac7fbdcf3d84b5b8"
+    },
+    {
+      "name": "arrays",
+      "input_json": "{\"a\":[2,1,null,true,false]}",
+      "expected_cj_utf8": "{\"a\":[2,1,null,true,false]}",
+      "expected_cj_hex": "7b2261223a5b322c312c6e756c6c2c747275652c66616c73655d7d",
+      "expected_sha256": "8bab69a3bf257b9c21251238f0fe743bd327c7539d24847f38beed4b0d226e0e"
+    },
+    {
+      "name": "unicode-scalar-order",
+      "input_json": "{\"😀\":0,\"é\":1,\"a\":2}",
+      "expected_cj_utf8": "{\"a\":2,\"é\":1,\"😀\":0}",
+      "expected_cj_hex": "7b2261223a322c22c3a9223a312c22f09f9880223a307d",
+      "expected_sha256": "6de000a6aa156ee236b9d9dbd0830b986d3ee20d83c74881f9a48f6367154687"
+    },
+    {
+      "name": "normalization-is-not-applied",
+      "input_json": "{\"e\":\"é\",\"c\":\"é\"}",
+      "expected_cj_utf8": "{\"c\":\"é\",\"e\":\"é\"}",
+      "expected_cj_hex": "7b2263223a22c3a9222c2265223a2265cc81227d",
+      "expected_sha256": "dec400a44ed2095cc2523008352428916d955371170ef27daf7a17d6bcddeea4"
+    },
+    {
+      "name": "quote",
+      "input_json": "{\"x\":\"\\\"\\\\\"}",
+      "expected_cj_utf8": "{\"x\":\"\\\"\\\\\"}",
+      "expected_cj_hex": "7b2278223a225c225c5c227d",
+      "expected_sha256": "dd41183c9f44fc78a0f59d03fc8566fbdf37430cea51c8d4fd72aeb3e6748969"
+    },
+    {
+      "name": "newline-preserved",
+      "input_json": "{\"x\":\"a\\r\\nb\"}",
+      "expected_cj_utf8": "{\"x\":\"a\\u000d\\u000ab\"}",
+      "expected_cj_hex": "7b2278223a22615c75303030645c753030306162227d",
+      "expected_sha256": "f28b46ef84f7c36418edd2be6f2206102be758899b2b90c9aedd8fbb4f25ce61"
+    },
+    {
+      "name": "exponent",
+      "input_json": "[1E+3,0e10,-1.200e-2]",
+      "expected_cj_utf8": "[1000,0,-0.012]",
+      "expected_cj_hex": "5b313030302c302c2d302e3031325d",
+      "expected_sha256": "659ade7264f3fe1a3ecbc9030961e9f5668fc3a9b85f963ea245e148016cfe25"
+    },
+    {
+      "name": "null",
+      "input_json": "null",
+      "expected_cj_utf8": "null",
+      "expected_cj_hex": "6e756c6c",
+      "expected_sha256": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b"
+    },
+    {
+      "name": "separator",
+      "input_json": "{\"x\":\"  \"}",
+      "expected_cj_utf8": "{\"x\":\"  \"}",
+      "expected_cj_hex": "7b2278223a22e280a8e280a9227d",
+      "expected_sha256": "dfd90bc01a3641c8b6b5cc1b1161de1f91d63ef197c1184b501ee3f4e5d7549d"
+    }
+  ],
+  "negative_json": [
+    "{\"a\":1,\"a\":2}",
+    "{\"a\":1,\"\\u0061\":2}",
+    "{\"a\":\"\\ud800\"}",
+    "NaN",
+    "1e5000",
+    "{}{}",
+    "﻿{}"
+  ]
+}

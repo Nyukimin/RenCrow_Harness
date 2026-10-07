@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Work summary output v0.2",
+  "type": "object",
+  "properties": {
+    "current_work": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "source_handles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(work|observation|instruction|summary|completion)-[0-9]+$"
+            },
+            "minItems": 1,
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "text",
+          "source_handles"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 256
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 8192
+          },
+          "source_handles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(work|observation|instruction|summary|completion)-[0-9]+$"
+            },
+            "minItems": 1,
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "text",
+          "reason",
+          "source_handles"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 256
+    },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "state": {
+            "enum": [
+              "passed",
+              "failed",
+              "not_run",
+              "unknown"
+            ]
+          },
+          "source_handles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(work|observation|instruction|summary|completion)-[0-9]+$"
+            },
+            "minItems": 1,
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "text",
+          "state",
+          "source_handles"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 256
+    },
+    "open_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "source_handles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(work|observation|instruction|summary|completion)-[0-9]+$"
+            },
+            "minItems": 1,
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "text",
+          "source_handles"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 256
+    },
+    "next_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8192
+          },
+          "source_handles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(work|observation|instruction|summary|completion)-[0-9]+$"
+            },
+            "minItems": 1,
+            "maxItems": 64
+          }
+        },
+        "required": [
+          "text",
+          "source_handles"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0,
+      "maxItems": 256
+    },
+    "important_observation_handles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^observation-[0-9]+$"
+      },
+      "minItems": 0,
+      "maxItems": 256
+    }
+  },
+  "required": [
+    "current_work",
+    "decisions",
+    "verification",
+    "open_items",
+    "next_steps",
+    "important_observation_handles"
+  ],
+  "additionalProperties": false
+}

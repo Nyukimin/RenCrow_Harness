@@ -1,0 +1,36 @@
+{
+  "version": "0.2.2",
+  "design_review_items": 17,
+  "runtime_test_plan": {
+    "total": 97,
+    "all_not_run": true
+  },
+  "function_contracts": 40,
+  "design_validators": [
+    {
+      "script": "validate_package.py",
+      "return_code": 0
+    },
+    {
+      "script": "validate_contract_details.py",
+      "return_code": 0
+    },
+    {
+      "script": "validate_wire_contracts.py",
+      "return_code": 0
+    }
+  ],
+  "python": "3.13.5",
+  "jsonschema": "4.26.0",
+  "not_performed": [
+    "product Go build",
+    "model generation",
+    "real tokenization",
+    "CORE native wiring",
+    "live tool execution",
+    "OS durability tests",
+    "repository writes",
+    "production deployment"
+  ],
+  "package_kind": "complete replacement design package; not product source implementation"
+}

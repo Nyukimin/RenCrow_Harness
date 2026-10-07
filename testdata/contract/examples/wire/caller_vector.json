@@ -1,0 +1,16 @@
+{
+  "caller": {
+    "principal": "user:ren",
+    "default_origin": "human",
+    "readable_session_owners": [
+      "user:ren",
+      "core:local"
+    ],
+    "controllable_session_owners": [
+      "user:ren",
+      "core:local"
+    ],
+    "relay_issuers": []
+  },
+  "expected_digest": "82ccc950e01cdb37cfc412785902ad24ef3c3260df625bce9e338b3b54443411"
+}

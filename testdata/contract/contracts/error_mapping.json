@@ -1,0 +1,157 @@
+{
+  "format_version": "rencrow-errors/v1",
+  "rules": [
+    {
+      "source_code": "CAPACITY_EXCEEDED",
+      "normalized_code": "QUEUE_TIMEOUT",
+      "evidence_rule": "not_started_only",
+      "action": "retry_same"
+    },
+    {
+      "source_code": "TARGET_UNAVAILABLE",
+      "normalized_code": "TRANSPORT_BY_EVIDENCE",
+      "evidence_rule": "evidence_required",
+      "action": "conditional"
+    },
+    {
+      "source_code": "NORMALIZATION_ERROR",
+      "normalized_code": "NORMALIZATION_BY_REASON",
+      "evidence_rule": "evidence_required",
+      "action": "conditional"
+    },
+    {
+      "source_code": "MODEL_NOT_ALIVE",
+      "normalized_code": "MODEL_UNAVAILABLE",
+      "evidence_rule": "not_started_if_rejected_before_dispatch",
+      "action": "stop"
+    },
+    {
+      "source_code": "TARGET_FIRST_OUTPUT_TIMEOUT",
+      "normalized_code": "FIRST_OUTPUT_BY_EVIDENCE",
+      "evidence_rule": "unknown_unless_runtime_proves_terminal",
+      "action": "conditional"
+    },
+    {
+      "source_code": "DEGENERATE_OUTPUT",
+      "normalized_code": "MODEL_OUTPUT_DEGENERATE",
+      "evidence_rule": "unknown_unless_runtime_proves_terminal",
+      "action": "stop"
+    },
+    {
+      "source_code": "EMPTY_FINAL_CONTENT",
+      "normalized_code": "EMPTY_FINAL_CONTENT",
+      "evidence_rule": "terminal_required",
+      "action": "retry_format"
+    },
+    {
+      "source_code": "REASONING_ONLY",
+      "normalized_code": "REASONING_ONLY",
+      "evidence_rule": "terminal_required",
+      "action": "retry_format"
+    },
+    {
+      "source_code": "RAW_TOOL_MARKUP",
+      "normalized_code": "RAW_TOOL_MARKUP",
+      "evidence_rule": "terminal_required",
+      "action": "retry_format"
+    },
+    {
+      "source_code": "MODEL_OUTPUT_SCHEMA_INVALID",
+      "normalized_code": "MODEL_OUTPUT_SCHEMA_INVALID",
+      "evidence_rule": "terminal_required",
+      "action": "retry_format"
+    },
+    {
+      "source_code": "BINDING_CHANGED",
+      "normalized_code": "BINDING_CHANGED",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "INPUT_DIGEST_MISMATCH",
+      "normalized_code": "INPUT_DIGEST_MISMATCH",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "REQUEST_DIGEST_MISMATCH",
+      "normalized_code": "REQUEST_DIGEST_MISMATCH",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "CONTEXT_LIMIT_EXCEEDED",
+      "normalized_code": "CONTEXT_LIMIT_EXCEEDED",
+      "evidence_rule": "not_started_or_terminal",
+      "action": "compact_once"
+    },
+    {
+      "source_code": "UNSUPPORTED_CONTRACT",
+      "normalized_code": "UNSUPPORTED_CONTRACT",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "UNSUPPORTED_RECOVERY_PROFILE",
+      "normalized_code": "UNSUPPORTED_RECOVERY_PROFILE",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "AUTH_FAILED",
+      "normalized_code": "AUTH_FAILED",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "RATE_LIMITED",
+      "normalized_code": "RATE_LIMITED",
+      "evidence_rule": "not_started",
+      "action": "retry_same"
+    },
+    {
+      "source_code": "LENGTH",
+      "normalized_code": "LENGTH",
+      "evidence_rule": "terminal_required",
+      "action": "stop_incomplete"
+    },
+    {
+      "source_code": "INCOMPLETE",
+      "normalized_code": "INCOMPLETE",
+      "evidence_rule": "terminal_or_unknown",
+      "action": "stop_incomplete"
+    },
+    {
+      "source_code": "REFUSED",
+      "normalized_code": "REFUSED",
+      "evidence_rule": "terminal_required",
+      "action": "stop_rejected"
+    },
+    {
+      "source_code": "CANCELLED",
+      "normalized_code": "CANCELLED",
+      "evidence_rule": "any_keep_actual_state",
+      "action": "stop_cancelled"
+    },
+    {
+      "source_code": "PERMIT_REVOKED",
+      "normalized_code": "PERMIT_REVOKED",
+      "evidence_rule": "any_keep_actual_state",
+      "action": "stop_cancelled"
+    },
+    {
+      "source_code": "BUDGET_UNVERIFIED",
+      "normalized_code": "BUDGET_UNVERIFIED",
+      "evidence_rule": "not_started",
+      "action": "stop"
+    },
+    {
+      "source_code": "MODEL_CONTRACT_FAILED",
+      "normalized_code": "MODEL_CONTRACT_FAILED",
+      "evidence_rule": "preserve_known_state",
+      "action": "stop"
+    }
+  ],
+  "unknown_code": "MODEL_CONTRACT_FAILED",
+  "unknown_generation_overrides_retry": true
+}

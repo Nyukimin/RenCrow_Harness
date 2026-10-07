@@ -1,0 +1,14 @@
+{
+  "contract_version": "harness-v1",
+  "state": "verified_exact",
+  "prompt_lower": 8000,
+  "prompt_upper": 8000,
+  "effective_context_limit": 32768,
+  "reserved_output_tokens": 4096,
+  "safety_margin_tokens": 256,
+  "request_digest": "67c6b1a6b70afa58e302faa146a89dffc30276f0162c8667621cb91ec9722ad5",
+  "binding_fingerprint": "bfp-v1:cf25685e3cbff5f9364f8bdadb54d8b852578931ad2602a62e077613b3a6ef8d",
+  "evidence_ref": "synthetic-fixture-not-tokenizer",
+  "reason": null,
+  "input_digest": "3dae8769d753391e270b48f531d8a1abbcc8ea21696fbea0d5a3761965ab54ef"
+}

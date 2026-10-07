@@ -1,0 +1,5 @@
+{
+  "candidate_sha256": "113311651fc22c91ad892f915cd2c26041136934450af6c00cd3372420b46a08",
+  "candidate_length": 6671,
+  "scope": "synthetic bytes and synthetic counts, not runtime validation"
+}

@@ -1,0 +1,14 @@
+{
+  "contract_version": "harness-v1",
+  "state": "verified_exact",
+  "prompt_lower": 2000,
+  "prompt_upper": 2000,
+  "effective_context_limit": 8192,
+  "reserved_output_tokens": 1024,
+  "safety_margin_tokens": 256,
+  "request_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "binding_fingerprint": "fixture-fingerprint",
+  "evidence_ref": "fixture-count-record",
+  "reason": null,
+  "input_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+}

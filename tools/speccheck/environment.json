@@ -1,0 +1,5 @@
+{
+  "purpose": "document_validation_environment_only",
+  "jsonschema": "4.26.0",
+  "python_product_dependency": false
+}

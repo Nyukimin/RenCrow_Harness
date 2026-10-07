@@ -1,0 +1,15 @@
+{
+  "receipt_id": "rcp_00000000-0000-7000-8000-000000000100",
+  "message_id": "msg_00000000-0000-7000-8000-000000000100",
+  "thread_id": "thr_00000000-0000-7000-8000-000000000001",
+  "evidence_id": "evd_00000000-0000-7000-8000-000000000100",
+  "principal": "user:ren",
+  "entrypoint": "cli_interactive",
+  "caller_profile_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "declared_origin": "human",
+  "effective_origin": "human",
+  "proof_basis": "declared_local",
+  "proof_digest": null,
+  "accepted_sequence": 1,
+  "accepted_at": "2026-10-07T00:00:00Z"
+}

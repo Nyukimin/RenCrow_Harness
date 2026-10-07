@@ -1,0 +1,449 @@
+{
+  "version": "0.2.2",
+  "status": "design_revised_runtime_not_tested",
+  "items": [
+    {
+      "review_id": "CR01",
+      "finding": "独立Harness目的と所有権",
+      "changed_sections": "SPEC§1〜6、IMPL§1〜2、STORAGE",
+      "design_response": "COREもCLIも初回利用。Harnessが実行/原本/再開を所有。COREは親Task/人格/Memory。",
+      "tests": [
+        "A01",
+        "A19",
+        "A20",
+        "A40"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR02",
+      "finding": "Chat経路へno-tools保護がない",
+      "changed_sections": "LLM_INTEGRATION§1〜4、IMPL§7",
+      "design_response": "Chat strictを初回必須実装、Responses共有normalization、hidden retry無効。",
+      "tests": [
+        "H01",
+        "H12",
+        "A26"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR03",
+      "finding": "Preflightの遷移矛盾",
+      "changed_sections": "SPEC§11.3、IMPL§10.5",
+      "design_response": "最低候補no-fitはCapacityBlocked、Emergency禁止。budget不明も別分類。",
+      "tests": [
+        "A04",
+        "A24"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR04",
+      "finding": "budget_unverifiedの動作未定義",
+      "changed_sections": "SPEC§10、IMPL§8、LLM_INTEGRATION§2〜3",
+      "design_response": "四状態と許可範囲を固定。初回bindingに非生成token計数の実装まで必須。",
+      "tests": [
+        "A04",
+        "A25",
+        "A29",
+        "A40"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR05",
+      "finding": "Compact/Resume型の欠落",
+      "changed_sections": "PROTOCOL§5〜6、schema、IMPL§11",
+      "design_response": "全field、5outcomeと7Run状態/control結果、async receiptを定義。",
+      "tests": [
+        "A11",
+        "A21"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR06",
+      "finding": "Summary handle体系",
+      "changed_sections": "IMPL§10.4、summary schema/prompt",
+      "design_response": "5配列と0始まりhandle、前回accepted一件、instructionは参照data。",
+      "tests": [
+        "A22"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR07",
+      "finding": "撤回とcompletion条件",
+      "changed_sections": "SPEC§11.2、IMPL§10.2〜3、selection schema",
+      "design_response": "revocation根拠をreplacement_handleで明示、quote exact。unique/full/size/partial制約を列挙。",
+      "tests": [
+        "H09",
+        "A23",
+        "A39"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR08",
+      "finding": "追加入力の分類field",
+      "changed_sections": "PROTOCOL InputAppendInput/InputReceipt、IMPL§5/12",
+      "design_response": "dispositionとqueue/control/application revisionを定義。",
+      "tests": [
+        "A06",
+        "A12",
+        "A30"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR09",
+      "finding": "段専用prompt owner",
+      "changed_sections": "SPEC§9、IMPL§7/10、prompts",
+      "design_response": "Harnessが段promptを所有。Human別保持/data-not-command/no-tools/partial必須。",
+      "tests": [
+        "H18",
+        "A22",
+        "A26"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR10",
+      "finding": "A試験の関数逆参照",
+      "changed_sections": "acceptance_matrix.json、checks",
+      "design_response": "全H/Aにfunctions、全Fにtestsを生成し双方向照合。",
+      "tests": [
+        "A21",
+        "A40"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR11",
+      "finding": "関数の工程割当不足",
+      "changed_sections": "ACCEPTANCE_MATRIX、IMPL§14〜15",
+      "design_response": "全30関数にphase。F02/F17=P2、F15=P3、F16=P2を明記。",
+      "tests": [
+        "A11",
+        "A40"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR12",
+      "finding": "source照合の補正未反映",
+      "changed_sections": "REPOSITORY_MAP、IMPL§2/6/7/14",
+      "design_response": "C14実物取得。five blocks、Actionless、retry、Kuro、12正本、命名を反映。実機未確認は残す。",
+      "tests": [
+        "A03",
+        "A09",
+        "A26",
+        "A31"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR13",
+      "finding": "source pinとRuntime拒否境界",
+      "changed_sections": "SOURCE_BASELINE L02、LLM_INTEGRATION§1",
+      "design_response": "L02 blob ecd1877313238515692060f9aabb1a2cd4f0f770取得。json_object+streamはRuntime拒否と明記。",
+      "tests": [
+        "A21",
+        "A26"
+      ],
+      "status": "document_addressed_requires_runtime_acceptance"
+    },
+    {
+      "review_id": "CR14",
+      "finding": "Gatewayか直結かの食い違い",
+      "changed_sections": "AD-02 / SPEC§10 / LLM_INTEGRATION",
+      "design_response": "Gatewayのみを確定。CORE非依存とGateway非依存を区別。直結自体が暗黙fallback違反とはしない",
+      "tests": [
+        "A19",
+        "A26",
+        "A50"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR15",
+      "finding": "LLM/Backendのcritical pathと未見積り",
+      "changed_sections": "AD-06/07 / WORK_ORDER WP02〜05",
+      "design_response": "初回Qwenを固定し外部変更もClaudeの作業。相対工数と依存を表示。既存API優先、engine改変は必要時だけ",
+      "tests": [
+        "A25",
+        "A50",
+        "A54"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR16",
+      "finding": "hidden retry禁止後のact回復欠落",
+      "changed_sections": "AD-04/05 / RETRY_CONTRACT / schema / SQL",
+      "design_response": "act最大2Attempt、同Action新ID、モデル補正はLLM。Compactionは各段1生成のまま",
+      "tests": [
+        "A41",
+        "A42",
+        "A43",
+        "A44",
+        "A45",
+        "A52"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR17",
+      "finding": "CORE revisionとHMAC issuerが未割当",
+      "changed_sections": "CORE_INTEGRATION / WORK_ORDER WP07〜08",
+      "design_response": "producer実装を作業化しrevision/HMAC byte定義とfixtureを作成",
+      "tests": [
+        "A46",
+        "A48",
+        "A53"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR18",
+      "finding": "ContextBlock.digest不一致",
+      "changed_sections": "AD-08 / PROTOCOL / INTERNAL_CONTRACTS",
+      "design_response": "公開4fieldを維持、computed digestは内部Prepared型",
+      "tests": [
+        "A46",
+        "A21"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR19",
+      "finding": "ResumeInput.limits欠落",
+      "changed_sections": "AD-09 / PROTOCOL / RETRY_CONTRACT / SQL",
+      "design_response": "全limits必須、新deadline/予算を保存返却。旧実績は保持",
+      "tests": [
+        "A47",
+        "A44"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR20",
+      "finding": "Completion Linkの2048bytes解釈",
+      "changed_sections": "SPEC§11.2 / IMPL§10.3 / S02",
+      "design_response": "付属A F12の各<=2048を確認。解釈変更でなく根拠と境界試験を追加",
+      "tests": [
+        "A51"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR21",
+      "finding": "CLI intake receipt明記不足",
+      "changed_sections": "AD-10 / CORE_INTEGRATION§3 / PROTOCOL",
+      "design_response": "全入口のdurable receiptを規定、profile宣言と本人性の限界を表示",
+      "tests": [
+        "A48",
+        "A49"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR22",
+      "finding": "EcoSystemとSwitch参照pinの差",
+      "changed_sections": "AD-12 / WORK_ORDER§5 / SOURCE_BASELINE",
+      "design_response": "参照/配布指定/稼働版を分離。新Harnessに旧Switch更新を要求しない",
+      "tests": [
+        "A54"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR23",
+      "finding": "初回範囲の段階化",
+      "changed_sections": "AD-11 / WORK_ORDER WP09〜11",
+      "design_response": "P6A macOS両入口は先行受入。三OSとforkを残したP6Bが正式完成、P7移行は任意",
+      "tests": [
+        "A16",
+        "A19",
+        "A20",
+        "A36",
+        "A37",
+        "A40"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR24",
+      "finding": "実装前最終確認Q01: 共有入力digest",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q01",
+      "design_response": "宣言field集合だけCJ1+LP、expected echoと二重正規化なし",
+      "tests": [
+        "A55"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR25",
+      "finding": "実装前最終確認Q02: opaque binding",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q02",
+      "design_response": "変化時拒否、同条件で安定、client再構成なし",
+      "tests": [
+        "A56"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR26",
+      "finding": "実装前最終確認Q03: エラー正規化",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q03",
+      "design_response": "first-output unknownとDEGENERATE no retryを区別",
+      "tests": [
+        "A57"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR27",
+      "finding": "実装前最終確認Q04: mutation canonical hash",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q04",
+      "design_response": "同義のwire順は同hash、意味変更はconflict",
+      "tests": [
+        "A58"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR28",
+      "finding": "実装前最終確認Q05: roleとprefix写像",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q05",
+      "design_response": "原文をtrimせずprefixだけcoalesce、後続instruction拒否",
+      "tests": [
+        "A59"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR29",
+      "finding": "実装前最終確認Q06: 圧縮後act投影",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q06",
+      "design_response": "同golden、obsoleteなし、refでEvidence取得可能",
+      "tests": [
+        "A60"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR30",
+      "finding": "実装前最終確認Q07: stage data形と分割",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q07",
+      "design_response": "schemaとbyte条件、再連結で原文、段要求数不変",
+      "tests": [
+        "A61"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR31",
+      "finding": "実装前最終確認Q08: Emergency縮約単位",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q08",
+      "design_response": "一定順で全適格置換、全体verified tokenで採否",
+      "tests": [
+        "A62"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR32",
+      "finding": "実装前最終確認Q09: Host Policy registry",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q09",
+      "design_response": "closed registry、scope/limit交差、fail closed",
+      "tests": [
+        "A63"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR33",
+      "finding": "実装前最終確認Q10: 拡張資産契約",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q10",
+      "design_response": "限定探索、bodyはEvidence load、hookで権限昇格なし",
+      "tests": [
+        "A64"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR34",
+      "finding": "実装前最終確認Q11: candidate byte形式",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q11",
+      "design_response": "正確なBLOB/hash、採用前後revisionを区別、拒否境界",
+      "tests": [
+        "A65"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR35",
+      "finding": "実装前最終確認Q12: Event payload15種",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q12",
+      "design_response": "Event.payloadとpayload_json一致、raw公開なし",
+      "tests": [
+        "A66"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR36",
+      "finding": "実装前最終確認Q13: 鍵principal caller digest",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q13",
+      "design_response": "唯一形式、profile集合順の正規化、鍵情報をhashへ入れない",
+      "tests": [
+        "A67"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR37",
+      "finding": "実装前最終確認Q14: moduleとmanifest",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q14",
+      "design_response": "正しいmodule/binary、未知pinの配備拒否",
+      "tests": [
+        "A68"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR38",
+      "finding": "実装前最終確認Q15: Shiro対象入口",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q15",
+      "design_response": "選択profileは全旧分岐を迂回、非対象は維持",
+      "tests": [
+        "A69"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR39",
+      "finding": "実装前最終確認Q16: act stream終端",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q16",
+      "design_response": "終端前Tool0、unknown/length/refusedを分離",
+      "tests": [
+        "A70"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    },
+    {
+      "review_id": "CR40",
+      "finding": "実装前最終確認Q17: measure呼出し回数",
+      "changed_sections": "IMPLEMENTATION_DECISIONS Q17",
+      "design_response": "各Attempt計数+生成、計数が生成/KVを起こさない",
+      "tests": [
+        "A71"
+      ],
+      "status": "design_decided_runtime_not_tested"
+    }
+  ],
+  "design_owner": "ルミナ",
+  "implementation_owner": "Claude"
+}

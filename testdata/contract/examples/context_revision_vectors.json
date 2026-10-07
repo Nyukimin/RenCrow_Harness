@@ -1,0 +1,47 @@
+[
+  {
+    "block": {
+      "kind": "stable_runtime_context",
+      "text": "原本は変更しない。",
+      "revision": "ctx-v1:94abdabc08f04651e063084356d158f6f7b51b6efa4dd8641c04941e0c19d602",
+      "source": null
+    },
+    "computed_text_digest": "bc92b5db0bd47dc10f603fd2420e533a744a8f199b8e6acb199303086fc642ea"
+  },
+  {
+    "block": {
+      "kind": "stable_runtime_context",
+      "text": "原本は変更しない。\n",
+      "revision": "ctx-v1:d60857259837c13dafb19e090cf88c375af4b19922a0130934b229a2c92fef22",
+      "source": null
+    },
+    "computed_text_digest": "831caa0d6eb2e1f16ed1bb3f85a91067aef42421c584c729c591ff92f1b418c8"
+  },
+  {
+    "block": {
+      "kind": "stable_runtime_context",
+      "text": "  原本は変更しない。",
+      "revision": "ctx-v1:9bf1af5dd5c1ff2f65e204fc0b724a081a82af35f7fee590f2258b4863269464",
+      "source": null
+    },
+    "computed_text_digest": "d2ba5aa455a4787ef2c6832926e92f746351c8f625fa422ea808f49579cdef14"
+  },
+  {
+    "block": {
+      "kind": "stable_runtime_context",
+      "text": "Café",
+      "revision": "ctx-v1:37e04fff5678806b4457c48fdc7020c0403b68942621468c32163d9e315f79e2",
+      "source": null
+    },
+    "computed_text_digest": "c42cc7a1ca08364b6fd859fa50d2454730a8236290a423373cc630da77c6d711"
+  },
+  {
+    "block": {
+      "kind": "stable_runtime_context",
+      "text": "Café",
+      "revision": "ctx-v1:25fda2706ca259789abb7a6f8f21deb5a6bbca86efad59666b91a94b80948fb4",
+      "source": null
+    },
+    "computed_text_digest": "73473dcc12b763085904a5279d048c4d5b3b008c46f1f32443b99de04aa83a14"
+  }
+]

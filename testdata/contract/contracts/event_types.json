@@ -1,0 +1,20 @@
+{
+  "format_version": "rencrow-event-types/v1",
+  "types": [
+    "session.created",
+    "input.accepted",
+    "input.applied",
+    "task.created",
+    "run.started",
+    "model.requested",
+    "model.completed",
+    "action.prepared",
+    "action.dispatch_started",
+    "action.completed",
+    "checkpoint.committed",
+    "control.cancel_requested",
+    "run.terminal",
+    "model.retry_scheduled",
+    "model.attempt_started"
+  ]
+}

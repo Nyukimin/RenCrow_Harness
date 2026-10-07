@@ -1,0 +1,73 @@
+{
+  "scope": "design_contract_validation_only",
+  "runtime_tests_executed": false,
+  "checks": [
+    {
+      "check": "new_public_types_and_rejections",
+      "status": "passed",
+      "detail": {
+        "positive_files": 8,
+        "negative_cases": 7
+      }
+    },
+    {
+      "check": "public_table_schema_and_shared_defs",
+      "status": "passed",
+      "detail": [
+        "ContextBlock",
+        "OriginProof",
+        "Limits",
+        "StartResult",
+        "ResumeInput",
+        "ResumeResult",
+        "InputReceipt",
+        "RunInfo",
+        "RecoveryPolicy",
+        "IntakeReceipt",
+        "ModelAttemptReceipt",
+        "ProgressDelta",
+        "ProgressReset",
+        "ProgressGap"
+      ]
+    },
+    {
+      "check": "context_revision_and_hmac_vectors",
+      "status": "passed",
+      "detail": {
+        "context_vectors": 5,
+        "tampering_cases": 5,
+        "scope": "byte-contract fixtures, not actual authentication"
+      }
+    },
+    {
+      "check": "work_dependency_and_scope_checks",
+      "status": "passed",
+      "detail": {
+        "packages": 12,
+        "functions": 40,
+        "mandatory_runtime_tests": 96,
+        "conditional_migration_test": 1
+      }
+    },
+    {
+      "check": "sqlite_attempt_budget_constraints",
+      "status": "passed",
+      "detail": {
+        "valid_cases": 3,
+        "negative_cases": 5,
+        "scope": "DDL only; no Go/durability/runtime verification"
+      }
+    },
+    {
+      "check": "completion_link_byte_boundary_examples",
+      "status": "passed",
+      "detail": 5
+    }
+  ],
+  "limitations": [
+    "No product Go compilation",
+    "No real LLM retries or tokenization",
+    "No real HMAC issuer or CLI intake",
+    "No OS, crash, or CORE production verification"
+  ]
+}

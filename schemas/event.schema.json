@@ -1,0 +1,3702 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Native Event v1",
+  "$defs": {
+    "TraceID": {
+      "type": "string",
+      "pattern": "^trc_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "SessionID": {
+      "type": "string",
+      "pattern": "^ses_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ThreadID": {
+      "type": "string",
+      "pattern": "^thr_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "TurnID": {
+      "type": "string",
+      "pattern": "^turn_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "TaskID": {
+      "type": "string",
+      "pattern": "^tsk_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RunID": {
+      "type": "string",
+      "pattern": "^run_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ActionID": {
+      "type": "string",
+      "pattern": "^act_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "AttemptID": {
+      "type": "string",
+      "pattern": "^att_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "EventID": {
+      "type": "string",
+      "pattern": "^evt_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "MessageID": {
+      "type": "string",
+      "pattern": "^msg_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "RequestID": {
+      "type": "string",
+      "pattern": "^req_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ResponseID": {
+      "type": "string",
+      "pattern": "^rsp_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "ReceiptID": {
+      "type": "string",
+      "pattern": "^rcp_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "CheckpointID": {
+      "type": "string",
+      "pattern": "^ckp_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "EvidenceID": {
+      "type": "string",
+      "pattern": "^evd_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "QueueItemID": {
+      "type": "string",
+      "pattern": "^qit_[0-9a-f]{8}-[0-9a-f]{4}-[57][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "MutationKey": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "ErrorInfo": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 2048
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "evidence_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable",
+        "evidence_id"
+      ],
+      "additionalProperties": false
+    },
+    "ByteRange": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "SourceRef": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "raw_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "projection_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "range": {
+          "$ref": "#/$defs/ByteRange"
+        },
+        "origin": {
+          "enum": [
+            "human",
+            "automation",
+            "host",
+            "agent",
+            "tool",
+            "unknown"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "owner",
+        "source_id",
+        "raw_hash",
+        "projection_version",
+        "range",
+        "origin",
+        "sequence"
+      ],
+      "additionalProperties": false
+    },
+    "ContextBlock": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "character_system_prompt",
+            "stable_runtime_context",
+            "recall_pack",
+            "variable_runtime_context",
+            "user_message"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 8388608
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceRef"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "text",
+        "revision",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "Binding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "alias",
+            "model_route"
+          ]
+        },
+        "selector": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "profile_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "agent_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "execution_role": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "selector",
+        "profile_revision",
+        "agent_id",
+        "execution_role"
+      ],
+      "additionalProperties": false
+    },
+    "Upstream": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "task_id": {
+          "$ref": "#/$defs/TaskID"
+        },
+        "trace_id": {
+          "$ref": "#/$defs/TraceID"
+        },
+        "session_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SessionID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "thread_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ThreadID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "turn_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TurnID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActionID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attempt_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AttemptID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "owner",
+        "task_id",
+        "trace_id",
+        "session_id",
+        "thread_id",
+        "turn_id",
+        "action_id",
+        "attempt_id"
+      ],
+      "additionalProperties": false
+    },
+    "OriginProof": {
+      "type": "object",
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "audience": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "origin": {
+          "enum": [
+            "human",
+            "automation"
+          ]
+        },
+        "source_message_id": {
+          "$ref": "#/$defs/MessageID"
+        },
+        "source_thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "destination_thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "mutation_key": {
+          "$ref": "#/$defs/MutationKey"
+        },
+        "raw_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "issued_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "expires_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "nonce": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "mac": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "issuer",
+        "key_id",
+        "audience",
+        "origin",
+        "source_message_id",
+        "source_thread_id",
+        "destination_thread_id",
+        "mutation_key",
+        "raw_hash",
+        "sequence",
+        "issued_at",
+        "expires_at",
+        "nonce",
+        "mac"
+      ],
+      "additionalProperties": false
+    },
+    "InputMessage": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "maxLength": 8388608
+        },
+        "origin_proof": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OriginProof"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "text",
+        "origin_proof"
+      ],
+      "additionalProperties": false
+    },
+    "Limits": {
+      "type": "object",
+      "properties": {
+        "max_model_steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "max_tool_calls_per_step": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        },
+        "deadline_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400
+        },
+        "max_capture_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 67108864
+        },
+        "max_generation_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        }
+      },
+      "required": [
+        "max_model_steps",
+        "max_tool_calls_per_step",
+        "deadline_seconds",
+        "max_capture_bytes",
+        "max_generation_attempts"
+      ],
+      "additionalProperties": false
+    },
+    "StartInput": {
+      "type": "object",
+      "properties": {
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "input": {
+          "$ref": "#/$defs/InputMessage"
+        },
+        "context_blocks": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/ContextBlock"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "character_system_prompt",
+                      "stable_runtime_context",
+                      "recall_pack",
+                      "variable_runtime_context"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "upstream": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Upstream"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_context_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expected_control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        },
+        "limits": {
+          "$ref": "#/$defs/Limits"
+        }
+      },
+      "required": [
+        "thread_id",
+        "input",
+        "context_blocks",
+        "upstream",
+        "expected_context_revision",
+        "expected_control_revision",
+        "idempotency_key",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "StartResult": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "accepted": {
+          "const": true
+        },
+        "session_id": {
+          "$ref": "#/$defs/SessionID"
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "turn_id": {
+          "$ref": "#/$defs/TurnID"
+        },
+        "task_id": {
+          "$ref": "#/$defs/TaskID"
+        },
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "trace_id": {
+          "$ref": "#/$defs/TraceID"
+        },
+        "effective_limits": {
+          "$ref": "#/$defs/Limits"
+        },
+        "deadline_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "recovery_policy_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "intake": {
+          "$ref": "#/$defs/IntakeReceipt"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "accepted",
+        "session_id",
+        "thread_id",
+        "turn_id",
+        "task_id",
+        "run_id",
+        "trace_id",
+        "effective_limits",
+        "deadline_at",
+        "recovery_policy_revision",
+        "intake"
+      ],
+      "additionalProperties": false
+    },
+    "ResumeInput": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "$ref": "#/$defs/TaskID"
+        },
+        "expected_last_run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "checkpoint_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckpointID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "binding": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        },
+        "limits": {
+          "$ref": "#/$defs/Limits"
+        }
+      },
+      "required": [
+        "task_id",
+        "expected_last_run_id",
+        "checkpoint_id",
+        "expected_control_revision",
+        "binding",
+        "idempotency_key",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "ResumeResult": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "task_id": {
+          "$ref": "#/$defs/TaskID"
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "previous_run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "trace_id": {
+          "$ref": "#/$defs/TraceID"
+        },
+        "checkpoint_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckpointID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effective_limits": {
+          "$ref": "#/$defs/Limits"
+        },
+        "deadline_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "recovery_policy_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "task_id",
+        "thread_id",
+        "previous_run_id",
+        "run_id",
+        "trace_id",
+        "checkpoint_id",
+        "effective_limits",
+        "deadline_at",
+        "recovery_policy_revision"
+      ],
+      "additionalProperties": false
+    },
+    "InputAppendInput": {
+      "type": "object",
+      "properties": {
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "input": {
+          "$ref": "#/$defs/InputMessage"
+        },
+        "disposition": {
+          "enum": [
+            "next_step",
+            "interrupt_current",
+            "next_turn"
+          ]
+        },
+        "expected_control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        }
+      },
+      "required": [
+        "thread_id",
+        "run_id",
+        "input",
+        "disposition",
+        "expected_control_revision",
+        "idempotency_key"
+      ],
+      "additionalProperties": false
+    },
+    "InputReceipt": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "queue_item_id": {
+          "$ref": "#/$defs/QueueItemID"
+        },
+        "message_id": {
+          "$ref": "#/$defs/MessageID"
+        },
+        "origin": {
+          "enum": [
+            "human",
+            "automation",
+            "unknown"
+          ]
+        },
+        "disposition": {
+          "enum": [
+            "next_step",
+            "interrupt_current",
+            "next_turn"
+          ]
+        },
+        "delivery_state": {
+          "enum": [
+            "queued",
+            "applied",
+            "deferred"
+          ]
+        },
+        "queue_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "intake": {
+          "$ref": "#/$defs/IntakeReceipt"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "queue_item_id",
+        "message_id",
+        "origin",
+        "disposition",
+        "delivery_state",
+        "queue_revision",
+        "control_revision",
+        "intake"
+      ],
+      "additionalProperties": false
+    },
+    "BudgetReport": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "enum": [
+            "verified_exact",
+            "verified_bound",
+            "estimated",
+            "unverified"
+          ]
+        },
+        "prompt_lower": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "prompt_upper": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "context_limit": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reserved_output_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "safety_margin_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "request_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "normalization_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "evidence_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "prompt_lower",
+        "prompt_upper",
+        "context_limit",
+        "reserved_output_tokens",
+        "safety_margin_tokens",
+        "request_digest",
+        "normalization_fingerprint",
+        "evidence_ref"
+      ],
+      "additionalProperties": false
+    },
+    "CompactInput": {
+      "type": "object",
+      "properties": {
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "expected_context_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "expected_control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        }
+      },
+      "required": [
+        "thread_id",
+        "expected_context_revision",
+        "expected_control_revision",
+        "dry_run",
+        "idempotency_key"
+      ],
+      "additionalProperties": false
+    },
+    "CompactResult": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "executed",
+            "cancelled",
+            "stale",
+            "unavailable",
+            "dry_run"
+          ]
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "NormalCompacted",
+                "EmergencyCompacted",
+                "CapacityBlocked",
+                "IntegrityBlocked",
+                "RestartRequired"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "checkpoint_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckpointID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "before": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BudgetReport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BudgetReport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "required_minimum_tokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "available_tokens": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "semantic_boundary": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "durable_boundary": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "outcome",
+        "checkpoint_id",
+        "before",
+        "after",
+        "required_minimum_tokens",
+        "available_tokens",
+        "semantic_boundary",
+        "durable_boundary",
+        "error"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "executed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "outcome": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "outcome": {
+                "type": "null"
+              },
+              "checkpoint_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "NormalCompacted",
+                  "EmergencyCompacted"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "checkpoint_id": {
+                "$ref": "#/$defs/CheckpointID"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "checkpoint_id": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "NormalCompacted",
+                  "EmergencyCompacted"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "before": {
+                "$ref": "#/$defs/BudgetReport"
+              },
+              "after": {
+                "$ref": "#/$defs/BudgetReport"
+              },
+              "semantic_boundary": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "durable_boundary": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Verification": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not_run",
+            "unknown"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceID"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        },
+        "criteria_revision": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "evidence_ids",
+        "criteria_revision"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence_ids": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/EvidenceID"
+                },
+                "minItems": 1,
+                "maxItems": 4096
+              },
+              "criteria_revision": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      ]
+    },
+    "RunResult": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "task_id": {
+          "$ref": "#/$defs/TaskID"
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "incomplete",
+            "rejected",
+            "blocked",
+            "cancelled",
+            "failed",
+            "restart_required"
+          ]
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "final_message_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MessageID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "final_text": {
+          "type": "string",
+          "maxLength": 1048576
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceID"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        },
+        "unresolved_action_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ActionID"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        },
+        "last_checkpoint_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CheckpointID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resumable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "run_id",
+        "task_id",
+        "status",
+        "code",
+        "final_message_id",
+        "final_text",
+        "verification",
+        "evidence_ids",
+        "unresolved_action_ids",
+        "last_checkpoint_id",
+        "resumable"
+      ],
+      "additionalProperties": false
+    },
+    "RunInfo": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "task_id": {
+          "$ref": "#/$defs/TaskID"
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "phase": {
+          "enum": [
+            "Admitting",
+            "Loading",
+            "Assembling",
+            "Measuring",
+            "Generating",
+            "PreparingAction",
+            "Executing",
+            "PersistingObservation",
+            "Compacting",
+            "CommittingCheckpoint",
+            "ValidatingFinal",
+            "PersistingResult",
+            "Cancelling",
+            "Recovering",
+            "RetryWaiting",
+            "Terminal"
+          ]
+        },
+        "terminal": {
+          "type": "boolean"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunResult"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "context_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "last_event_seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "effective_limits": {
+          "$ref": "#/$defs/Limits"
+        },
+        "deadline_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "recovery_policy_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generation_attempts_used": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "generation_attempts_unknown": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "run_id",
+        "task_id",
+        "thread_id",
+        "phase",
+        "terminal",
+        "result",
+        "context_revision",
+        "control_revision",
+        "last_event_seq",
+        "effective_limits",
+        "deadline_at",
+        "recovery_policy_revision",
+        "generation_attempts_used",
+        "generation_attempts_unknown"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "terminal": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "result": {
+                "$ref": "#/$defs/RunResult"
+              },
+              "phase": {
+                "const": "Terminal"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "result": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SessionInfo": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "$ref": "#/$defs/SessionID"
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "workspace_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "binding": {
+          "$ref": "#/$defs/Binding"
+        },
+        "policy_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "execution_mode": {
+          "enum": [
+            "structured_only",
+            "trusted_host",
+            "isolated"
+          ]
+        },
+        "context_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "active_run_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "session_id",
+        "thread_id",
+        "workspace_path",
+        "binding",
+        "policy_ref",
+        "execution_mode",
+        "context_revision",
+        "control_revision",
+        "active_run_id"
+      ],
+      "additionalProperties": false
+    },
+    "InitializeInput": {
+      "type": "object",
+      "properties": {
+        "client_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "client_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "protocol_version": {
+          "const": "rencrow-harness/v1"
+        }
+      },
+      "required": [
+        "client_name",
+        "client_version",
+        "protocol_version"
+      ],
+      "additionalProperties": false
+    },
+    "Capability": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "disabled",
+            "unavailable",
+            "unverified"
+          ]
+        },
+        "basis": {
+          "enum": [
+            "declared",
+            "contract_tested",
+            "runtime_verified"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2048
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "basis",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "CapabilitiesResult": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "rencrow-harness/v1"
+        },
+        "build_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Capability"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        }
+      },
+      "required": [
+        "protocol_version",
+        "build_revision",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "SessionOpenInput": {
+      "type": "object",
+      "properties": {
+        "workspace_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "binding": {
+          "$ref": "#/$defs/Binding"
+        },
+        "policy_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "execution_mode": {
+          "enum": [
+            "structured_only",
+            "trusted_host",
+            "isolated"
+          ]
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        }
+      },
+      "required": [
+        "workspace_path",
+        "binding",
+        "policy_ref",
+        "execution_mode",
+        "idempotency_key"
+      ],
+      "additionalProperties": false
+    },
+    "SessionOpenResult": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "session": {
+          "$ref": "#/$defs/SessionInfo"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "session"
+      ],
+      "additionalProperties": false
+    },
+    "SessionListInput": {
+      "type": "object",
+      "properties": {
+        "cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "cursor",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "SessionListResult": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SessionInfo"
+          },
+          "minItems": 0,
+          "maxItems": 100
+        },
+        "next_cursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "sessions",
+        "next_cursor"
+      ],
+      "additionalProperties": false
+    },
+    "SessionGetInput": {
+      "type": "object",
+      "properties": {
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        }
+      },
+      "required": [
+        "thread_id"
+      ],
+      "additionalProperties": false
+    },
+    "SessionForkInput": {
+      "type": "object",
+      "properties": {
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "checkpoint_id": {
+          "$ref": "#/$defs/CheckpointID"
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        }
+      },
+      "required": [
+        "thread_id",
+        "checkpoint_id",
+        "idempotency_key"
+      ],
+      "additionalProperties": false
+    },
+    "ForkResult": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "source_thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "session_id": {
+          "$ref": "#/$defs/SessionID"
+        },
+        "checkpoint_id": {
+          "$ref": "#/$defs/CheckpointID"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "source_thread_id",
+        "thread_id",
+        "session_id",
+        "checkpoint_id"
+      ],
+      "additionalProperties": false
+    },
+    "InterruptInput": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "expected_control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "idempotency_key": {
+          "$ref": "#/$defs/MutationKey"
+        }
+      },
+      "required": [
+        "run_id",
+        "expected_control_revision",
+        "idempotency_key"
+      ],
+      "additionalProperties": false
+    },
+    "InterruptReceipt": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "signal_recorded": {
+          "type": "boolean"
+        },
+        "control_revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "code": {
+          "enum": [
+            "CANCEL_REQUESTED",
+            "ALREADY_TERMINAL"
+          ]
+        }
+      },
+      "required": [
+        "receipt_id",
+        "run_id",
+        "signal_recorded",
+        "control_revision",
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    "RunGetInput": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "additionalProperties": false
+    },
+    "OperationAccepted": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "accepted": {
+          "const": true
+        }
+      },
+      "required": [
+        "receipt_id",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "ReceiptGetInput": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        }
+      },
+      "required": [
+        "receipt_id"
+      ],
+      "additionalProperties": false
+    },
+    "ReceiptPayload": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "StartResult"
+            },
+            "value": {
+              "$ref": "#/$defs/StartResult"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "ResumeResult"
+            },
+            "value": {
+              "$ref": "#/$defs/ResumeResult"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "InputReceipt"
+            },
+            "value": {
+              "$ref": "#/$defs/InputReceipt"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "CompactResult"
+            },
+            "value": {
+              "$ref": "#/$defs/CompactResult"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "SessionOpenResult"
+            },
+            "value": {
+              "$ref": "#/$defs/SessionOpenResult"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "ForkResult"
+            },
+            "value": {
+              "$ref": "#/$defs/ForkResult"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "InterruptReceipt"
+            },
+            "value": {
+              "$ref": "#/$defs/InterruptReceipt"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "const": "RunResult"
+            },
+            "value": {
+              "$ref": "#/$defs/RunResult"
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ReceiptRecord": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "stage": {
+          "enum": [
+            "accepted",
+            "running",
+            "terminal"
+          ]
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReceiptPayload"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ErrorInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "receipt_id",
+        "operation",
+        "stage",
+        "result",
+        "error"
+      ],
+      "additionalProperties": false
+    },
+    "EventsReadInput": {
+      "type": "object",
+      "properties": {
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "after_seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "required": [
+        "thread_id",
+        "after_seq",
+        "limit"
+      ],
+      "additionalProperties": false
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "$ref": "#/$defs/EventID"
+        },
+        "event_seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "task_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TaskID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "enum": [
+            "session.created",
+            "input.accepted",
+            "input.applied",
+            "task.created",
+            "run.started",
+            "model.requested",
+            "model.completed",
+            "action.prepared",
+            "action.dispatch_started",
+            "action.completed",
+            "checkpoint.committed",
+            "control.cancel_requested",
+            "run.terminal",
+            "model.retry_scheduled",
+            "model.attempt_started"
+          ]
+        },
+        "receipt_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReceiptID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "message_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MessageID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recorded_at": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "payload": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "event_id",
+        "event_seq",
+        "thread_id",
+        "task_id",
+        "run_id",
+        "type",
+        "receipt_id",
+        "evidence_id",
+        "message_id",
+        "code",
+        "recorded_at",
+        "payload"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "session.created"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "session_id": {
+                    "$ref": "#/$defs/SessionID"
+                  },
+                  "binding": {
+                    "$ref": "#/$defs/Binding"
+                  },
+                  "mode": {
+                    "enum": [
+                      "structured_only",
+                      "trusted_host",
+                      "isolated"
+                    ]
+                  }
+                },
+                "required": [
+                  "session_id",
+                  "binding",
+                  "mode"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "input.accepted"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "intake": {
+                    "$ref": "#/$defs/IntakeReceipt"
+                  },
+                  "queue_item_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/QueueItemID"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "disposition": {
+                    "enum": [
+                      "initial",
+                      "next_step",
+                      "interrupt_current",
+                      "next_turn"
+                    ]
+                  },
+                  "queue_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "control_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "intake",
+                  "queue_item_id",
+                  "disposition",
+                  "queue_revision",
+                  "control_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "input.applied"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "message_id": {
+                    "$ref": "#/$defs/MessageID"
+                  },
+                  "queue_item_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/QueueItemID"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "context_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "disposition": {
+                    "enum": [
+                      "initial",
+                      "next_step",
+                      "interrupt_current",
+                      "next_turn"
+                    ]
+                  }
+                },
+                "required": [
+                  "message_id",
+                  "queue_item_id",
+                  "context_revision",
+                  "disposition"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "task.created"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "task_id": {
+                    "$ref": "#/$defs/TaskID"
+                  },
+                  "turn_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TurnID"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "parent_task_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TaskID"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "kind": {
+                    "enum": [
+                      "work",
+                      "compaction",
+                      "session_maintenance"
+                    ]
+                  }
+                },
+                "required": [
+                  "task_id",
+                  "turn_id",
+                  "parent_task_id",
+                  "kind"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "run.started"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "run_id": {
+                    "$ref": "#/$defs/RunID"
+                  },
+                  "previous_run_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RunID"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "trace_id": {
+                    "$ref": "#/$defs/TraceID"
+                  },
+                  "writer_epoch": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "effective_limits": {
+                    "$ref": "#/$defs/Limits"
+                  },
+                  "deadline_at": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "recovery_policy_revision": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "run_id",
+                  "previous_run_id",
+                  "trace_id",
+                  "writer_epoch",
+                  "effective_limits",
+                  "deadline_at",
+                  "recovery_policy_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "model.requested"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "request_id": {
+                    "$ref": "#/$defs/RequestID"
+                  },
+                  "stage": {
+                    "enum": [
+                      "act",
+                      "instruction_selection",
+                      "work_summary"
+                    ]
+                  },
+                  "ordinal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "input_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "request_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "binding_fingerprint": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "attempt_id",
+                  "request_id",
+                  "stage",
+                  "ordinal",
+                  "input_digest",
+                  "request_digest",
+                  "binding_fingerprint",
+                  "stream"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "model.completed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "completed",
+                      "incomplete",
+                      "refused",
+                      "error"
+                    ]
+                  },
+                  "generation_state": {
+                    "enum": [
+                      "not_started",
+                      "terminal",
+                      "unknown"
+                    ]
+                  },
+                  "failure_code": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "attempt_receipt_evidence_id": {
+                    "$ref": "#/$defs/EvidenceID"
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "attempt_id",
+                  "outcome",
+                  "generation_state",
+                  "failure_code",
+                  "attempt_receipt_evidence_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "action.prepared"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "kind": {
+                    "enum": [
+                      "model",
+                      "tool",
+                      "measurement",
+                      "verification"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "args_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "policy_revision": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "attempt_id",
+                  "kind",
+                  "name",
+                  "args_hash",
+                  "policy_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "action.dispatch_started"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "writer_epoch": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "control_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "attempt_id",
+                  "writer_epoch",
+                  "control_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "action.completed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "effect_state": {
+                    "enum": [
+                      "not_started",
+                      "completed",
+                      "failed",
+                      "cancelled",
+                      "unknown"
+                    ]
+                  },
+                  "exit_code": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "result_evidence_ids": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/EvidenceID"
+                    },
+                    "minItems": 0,
+                    "maxItems": 128
+                  },
+                  "capture_complete": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "attempt_id",
+                  "effect_state",
+                  "exit_code",
+                  "result_evidence_ids",
+                  "capture_complete"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "checkpoint.committed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "checkpoint_id": {
+                    "$ref": "#/$defs/CheckpointID"
+                  },
+                  "mode": {
+                    "enum": [
+                      "normal",
+                      "emergency",
+                      "fork"
+                    ]
+                  },
+                  "candidate_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "context_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "semantic_boundary": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "durable_boundary": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "before_count_evidence_id": {
+                    "$ref": "#/$defs/EvidenceID"
+                  },
+                  "after_count_evidence_id": {
+                    "$ref": "#/$defs/EvidenceID"
+                  }
+                },
+                "required": [
+                  "checkpoint_id",
+                  "mode",
+                  "candidate_hash",
+                  "context_revision",
+                  "semantic_boundary",
+                  "durable_boundary",
+                  "before_count_evidence_id",
+                  "after_count_evidence_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "control.cancel_requested"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "run_id": {
+                    "$ref": "#/$defs/RunID"
+                  },
+                  "control_revision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "principal": {
+                    "$ref": "#/$defs/Principal"
+                  }
+                },
+                "required": [
+                  "run_id",
+                  "control_revision",
+                  "reason",
+                  "principal"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "run.terminal"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "completed",
+                      "incomplete",
+                      "rejected",
+                      "blocked",
+                      "cancelled",
+                      "failed",
+                      "restart_required"
+                    ]
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "result_evidence_id": {
+                    "$ref": "#/$defs/EvidenceID"
+                  },
+                  "last_checkpoint_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/CheckpointID"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "status",
+                  "code",
+                  "result_evidence_id",
+                  "last_checkpoint_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "model.retry_scheduled"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "failed_attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "next_ordinal": {
+                    "const": 1
+                  },
+                  "trigger_code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "delay_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "recovery_profile": {
+                    "enum": [
+                      "same_request",
+                      "terminal_output_once"
+                    ]
+                  },
+                  "recovery_profile_revision": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "failed_attempt_id",
+                  "next_ordinal",
+                  "trigger_code",
+                  "delay_ms",
+                  "recovery_profile",
+                  "recovery_profile_revision"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "model.attempt_started"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "action_id": {
+                    "$ref": "#/$defs/ActionID"
+                  },
+                  "attempt_id": {
+                    "$ref": "#/$defs/AttemptID"
+                  },
+                  "ordinal": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "request_id": {
+                    "$ref": "#/$defs/RequestID"
+                  },
+                  "generation_attempts_used": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "deadline_at": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                "required": [
+                  "action_id",
+                  "attempt_id",
+                  "ordinal",
+                  "request_id",
+                  "generation_attempts_used",
+                  "deadline_at"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "EventsReadResult": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Event"
+          },
+          "minItems": 0,
+          "maxItems": 1000
+        },
+        "next_after_seq": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "has_more": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "events",
+        "next_after_seq",
+        "has_more"
+      ],
+      "additionalProperties": false
+    },
+    "EvidenceReadInput": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/EvidenceID"
+        },
+        "projection_version": {
+          "enum": [
+            "raw/v1",
+            "text/v1"
+          ]
+        },
+        "range": {
+          "$ref": "#/$defs/ByteRange"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "projection_version",
+        "range"
+      ],
+      "additionalProperties": false
+    },
+    "EvidenceReadResult": {
+      "type": "object",
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/EvidenceID"
+        },
+        "projection_version": {
+          "enum": [
+            "raw/v1",
+            "text/v1"
+          ]
+        },
+        "data_base64": {
+          "type": "string",
+          "maxLength": 100000
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "returned_range": {
+          "$ref": "#/$defs/ByteRange"
+        },
+        "partial": {
+          "type": "boolean"
+        },
+        "raw_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "projection_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "capture_complete": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "projection_version",
+        "data_base64",
+        "total_bytes",
+        "returned_range",
+        "partial",
+        "raw_hash",
+        "projection_hash",
+        "capture_complete"
+      ],
+      "additionalProperties": false
+    },
+    "ShutdownInput": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "drain",
+            "cancel"
+          ]
+        },
+        "deadline_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300
+        }
+      },
+      "required": [
+        "mode",
+        "deadline_seconds"
+      ],
+      "additionalProperties": false
+    },
+    "ShutdownResult": {
+      "type": "object",
+      "properties": {
+        "accepted": {
+          "const": true
+        }
+      },
+      "required": [
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "EmptyInput": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "RecoveryPolicy": {
+      "type": "object",
+      "properties": {
+        "contract_version": {
+          "const": "act-recovery/v1"
+        },
+        "max_attempts_per_act": {
+          "const": 2
+        },
+        "allowed_profiles": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "same_request",
+              "terminal_output_once"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "contains": {
+            "const": "same_request"
+          }
+        }
+      },
+      "required": [
+        "contract_version",
+        "max_attempts_per_act",
+        "allowed_profiles"
+      ],
+      "additionalProperties": false
+    },
+    "IntakeReceipt": {
+      "type": "object",
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/ReceiptID"
+        },
+        "message_id": {
+          "$ref": "#/$defs/MessageID"
+        },
+        "thread_id": {
+          "$ref": "#/$defs/ThreadID"
+        },
+        "evidence_id": {
+          "$ref": "#/$defs/EvidenceID"
+        },
+        "principal": {
+          "$ref": "#/$defs/Principal"
+        },
+        "entrypoint": {
+          "enum": [
+            "cli_interactive",
+            "cli_exec",
+            "cli_pipe",
+            "stdio_core",
+            "stdio_automation"
+          ]
+        },
+        "caller_profile_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "declared_origin": {
+          "enum": [
+            "human",
+            "automation",
+            "unknown"
+          ]
+        },
+        "effective_origin": {
+          "enum": [
+            "human",
+            "automation",
+            "unknown"
+          ]
+        },
+        "proof_basis": {
+          "enum": [
+            "declared_local",
+            "verified_relay",
+            "automation",
+            "unknown"
+          ]
+        },
+        "proof_digest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accepted_sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "accepted_at": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "message_id",
+        "thread_id",
+        "evidence_id",
+        "principal",
+        "entrypoint",
+        "caller_profile_digest",
+        "declared_origin",
+        "effective_origin",
+        "proof_basis",
+        "proof_digest",
+        "accepted_sequence",
+        "accepted_at"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "proof_basis": {
+                "const": "verified_relay"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "proof_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "proof_digest": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ModelAttemptReceipt": {
+      "type": "object",
+      "properties": {
+        "action_id": {
+          "$ref": "#/$defs/ActionID"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/AttemptID"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "request_id": {
+          "$ref": "#/$defs/RequestID"
+        },
+        "response_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResponseID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stage": {
+          "enum": [
+            "act",
+            "instruction_selection",
+            "work_summary"
+          ]
+        },
+        "base_request_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "request_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "binding_fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "recovery_profile": {
+          "enum": [
+            "same_request",
+            "terminal_output_once"
+          ]
+        },
+        "recovery_profile_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "applied_transformations": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "format_suffix",
+              "thinking_disabled"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 2
+        },
+        "failure_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generation_state": {
+          "enum": [
+            "not_started",
+            "terminal",
+            "unknown"
+          ]
+        },
+        "backend_attempts": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "usage_complete": {
+          "type": "boolean"
+        },
+        "request_evidence_id": {
+          "$ref": "#/$defs/EvidenceID"
+        },
+        "response_evidence_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceID"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "input_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "action_id",
+        "attempt_id",
+        "ordinal",
+        "request_id",
+        "response_id",
+        "stage",
+        "base_request_digest",
+        "request_digest",
+        "binding_fingerprint",
+        "recovery_profile",
+        "recovery_profile_revision",
+        "applied_transformations",
+        "failure_code",
+        "generation_state",
+        "backend_attempts",
+        "usage_complete",
+        "request_evidence_id",
+        "response_evidence_id",
+        "input_digest"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "ordinal": {
+                "const": 0
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "recovery_profile": {
+                "const": "same_request"
+              },
+              "applied_transformations": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "enum": [
+                  "instruction_selection",
+                  "work_summary"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "ordinal": {
+                "const": 0
+              },
+              "recovery_profile": {
+                "const": "same_request"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "generation_state": {
+                "const": "not_started"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "backend_attempts": {
+                "const": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "generation_state": {
+                "const": "terminal"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "backend_attempts": {
+                "const": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "generation_state": {
+                "const": "unknown"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "backend_attempts": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "recovery_profile": {
+                "const": "same_request"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "applied_transformations": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ProgressDelta": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/AttemptID"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 65536
+        },
+        "provisional": {
+          "const": true
+        }
+      },
+      "required": [
+        "run_id",
+        "attempt_id",
+        "ordinal",
+        "text",
+        "provisional"
+      ],
+      "additionalProperties": false
+    },
+    "ProgressReset": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "old_attempt_id": {
+          "$ref": "#/$defs/AttemptID"
+        },
+        "new_attempt_id": {
+          "$ref": "#/$defs/AttemptID"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "provisional": {
+          "const": true
+        }
+      },
+      "required": [
+        "run_id",
+        "old_attempt_id",
+        "new_attempt_id",
+        "reason",
+        "provisional"
+      ],
+      "additionalProperties": false
+    },
+    "ProgressGap": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/RunID"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/AttemptID"
+        },
+        "from_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "to_ordinal": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "run_id",
+        "attempt_id",
+        "from_ordinal",
+        "to_ordinal"
+      ],
+      "additionalProperties": false
+    },
+    "Principal": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,31}:[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    }
+  },
+  "$ref": "#/$defs/Event"
+}

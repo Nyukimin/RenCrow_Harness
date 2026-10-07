@@ -1,0 +1,14 @@
+{
+  "contract_version": "harness-v1",
+  "stage": "act",
+  "expected_binding_fingerprint": "fixture-binding-v1",
+  "expected_request_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+  "max_backend_attempts": 1,
+  "recovery": {
+    "profile_id": "terminal_output_once",
+    "profile_revision": "qwen-terminal-output-v1",
+    "retry_of_request_id": "req_00000000-0000-7000-8000-000000000100",
+    "trigger_code": "REASONING_ONLY"
+  },
+  "expected_input_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+}

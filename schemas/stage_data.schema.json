@@ -1,0 +1,555 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Compaction stage input v1",
+  "$defs": {
+    "Piece": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "origin": {
+          "enum": [
+            "human",
+            "automation",
+            "host",
+            "agent",
+            "tool",
+            "unknown"
+          ]
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "chunk_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "chunk_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 8000
+        },
+        "continuing_constraint": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "handle",
+        "origin",
+        "sequence",
+        "chunk_index",
+        "chunk_count",
+        "text",
+        "continuing_constraint"
+      ],
+      "additionalProperties": false
+    },
+    "Observation": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "partial": {
+          "type": "boolean"
+        },
+        "capture_complete": {
+          "type": "boolean"
+        },
+        "excerpts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "range": {
+                "type": "object",
+                "properties": {
+                  "start": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "end": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "start",
+                  "end"
+                ],
+                "additionalProperties": false
+              },
+              "text": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 2048
+              }
+            },
+            "required": [
+              "range",
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "handle",
+        "tool",
+        "sequence",
+        "total_bytes",
+        "partial",
+        "capture_complete",
+        "excerpts"
+      ],
+      "additionalProperties": false
+    },
+    "CompletionLink": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "target_handle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "call_text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2048
+        },
+        "output_text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2048
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "handle",
+        "target_handle",
+        "call_text",
+        "output_text",
+        "exit_code"
+      ],
+      "additionalProperties": false
+    },
+    "Completion": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "instruction_handles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "minItems": 1,
+          "maxItems": 512
+        },
+        "call_text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2048
+        },
+        "output_text": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 2048
+        },
+        "exit_code": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "handle",
+        "instruction_handles",
+        "call_text",
+        "output_text",
+        "exit_code"
+      ],
+      "additionalProperties": false
+    },
+    "SummaryText": {
+      "type": "object",
+      "properties": {
+        "current_work": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 8192
+              }
+            },
+            "required": [
+              "text",
+              "reason"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "verification": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              },
+              "state": {
+                "enum": [
+                  "passed",
+                  "failed",
+                  "not_run",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "text",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "open_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "next_steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8192
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 256
+        }
+      },
+      "required": [
+        "current_work",
+        "decisions",
+        "verification",
+        "open_items",
+        "next_steps"
+      ],
+      "additionalProperties": false
+    },
+    "Protected": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "active_tool",
+            "mixed_media",
+            "unknown",
+            "host_protected"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 512
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 16777216
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "partial": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "description",
+        "text",
+        "total_bytes",
+        "partial"
+      ],
+      "additionalProperties": false
+    },
+    "SelectionDataset": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": "rencrow-selection-data/v1"
+        },
+        "presented_sources": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Piece"
+              },
+              {
+                "properties": {
+                  "handle": {
+                    "pattern": "^presented-(0|[1-9][0-9]*)$"
+                  },
+                  "origin": {
+                    "enum": [
+                      "human",
+                      "automation"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "completion_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CompletionLink"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        }
+      },
+      "required": [
+        "format_version",
+        "presented_sources",
+        "completion_links"
+      ],
+      "additionalProperties": false
+    },
+    "SummaryDataset": {
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "const": "rencrow-summary-data/v1"
+        },
+        "work": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Piece"
+              },
+              {
+                "properties": {
+                  "handle": {
+                    "pattern": "^work-(0|[1-9][0-9]*)$"
+                  },
+                  "continuing_constraint": {
+                    "const": false
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Observation"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        },
+        "instructions": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/Piece"
+              },
+              {
+                "properties": {
+                  "handle": {
+                    "pattern": "^instruction-(0|[1-9][0-9]*)$"
+                  },
+                  "origin": {
+                    "enum": [
+                      "human",
+                      "automation"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 8192
+        },
+        "prior_summaries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "handle": {
+                "const": "summary-0"
+              },
+              "summary": {
+                "$ref": "#/$defs/SummaryText"
+              }
+            },
+            "required": [
+              "handle",
+              "summary"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 1
+        },
+        "completions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Completion"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        },
+        "protected_state": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Protected"
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        }
+      },
+      "required": [
+        "format_version",
+        "work",
+        "observations",
+        "instructions",
+        "prior_summaries",
+        "completions",
+        "protected_state"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/SelectionDataset"
+    },
+    {
+      "$ref": "#/$defs/SummaryDataset"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "current_work": [
+    {
+      "text": "入力保持の試験を実施する段階。",
+      "source_handles": [
+        "work-0"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "text": "原本は書き換えない。",
+      "reason": "現在の指示。",
+      "source_handles": [
+        "instruction-0"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "text": "cold resume試験はまだ実施していない。",
+      "state": "not_run",
+      "source_handles": [
+        "work-0"
+      ]
+    }
+  ],
+  "open_items": [
+    {
+      "text": "再開時の照合。",
+      "source_handles": [
+        "work-0"
+      ]
+    }
+  ],
+  "next_steps": [
+    {
+      "text": "隔離fixtureで再開を試す。",
+      "source_handles": [
+        "work-0"
+      ]
+    }
+  ],
+  "important_observation_handles": [
+    "observation-0"
+  ]
+}

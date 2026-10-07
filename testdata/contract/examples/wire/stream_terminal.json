@@ -1,0 +1,27 @@
+{
+  "contract_version": "harness-v1",
+  "outcome": "completed",
+  "finish_reason": "tool_calls",
+  "code": null,
+  "provider_response_id": "fixture-chat-1",
+  "usage": {
+    "prompt_tokens": 8000,
+    "completion_tokens": 20,
+    "cached_tokens": null
+  },
+  "harness_receipt": {
+    "stage": "act",
+    "binding_fingerprint": "bfp-v1:cf25685e3cbff5f9364f8bdadb54d8b852578931ad2602a62e077613b3a6ef8d",
+    "request_digest": "fec1d0c41d2ece109a38e21c9c10d4a6598e169292515aaae4eaa12739a5a88a",
+    "backend_attempts": 1,
+    "generation_state": "terminal",
+    "recovery_profile": "same_request",
+    "recovery_profile_revision": "builtin-v1",
+    "applied_transformations": [],
+    "usage_complete": true,
+    "contract_version": "harness-v1",
+    "logical_requests": 1,
+    "hidden_retry": false,
+    "input_digest": "9a0742630d64d3fc648f24a0d92b22362e17d40af325efb2196396481599615c"
+  }
+}

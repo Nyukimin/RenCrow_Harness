@@ -1,0 +1,31 @@
+{
+  "template_only": true,
+  "components": {
+    "harness": {
+      "repository": "Nyukimin/RenCrow_Harness",
+      "workspace_path": "./RenCrow_Harness",
+      "version": "${HARNESS_COMMIT}",
+      "required": false,
+      "distribution": "binary",
+      "role": "Shared standalone and CORE-consumable task runtime; owns execution state and compaction",
+      "runtime": {
+        "primary": {
+          "implementation": "go",
+          "artifact": "rencrow-harness",
+          "status": "development"
+        },
+        "companions": []
+      },
+      "deployment": {
+        "go_binaries": [
+          {
+            "module": "github.com/Nyukimin/RenCrow_Harness",
+            "main_package": "github.com/Nyukimin/RenCrow_Harness/cmd/rencrow-harness",
+            "installed_path": "%h/.local/bin/rencrow-harness",
+            "version": "${HARNESS_COMMIT}"
+          }
+        ]
+      }
+    }
+  }
+}

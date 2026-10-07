@@ -1,0 +1,11 @@
+# 例の意味
+
+ここにあるID、workspace、binding、数値、結果は合成例。稼働環境の値、実Modelの計測、成功した操作ではない。`native_requests.json`は各methodの単独schema例であり、順番どおりに実行して成立するsession transcriptではない。実行時は前のresponseが返したID/revisionを利用する。
+
+`compact_results.json`は5outcomeとcancel/stale/unavailable/dry-runのタグ形の例である。具体的な正常commitではBudgetReportとsemantic/durable boundary、checkpoint取得証拠が必要。例のtoken数やhashを実行結果へ転記しない。
+
+`core_start.json`は四つのContextBlockを保持する例。user_messageはinputからHostが一度だけ作る。CORE署名relayが無ければAutomation入力であり、agent名だけでHumanになることはない。
+
+## wire fixtures
+
+wire/は全て合成データです。fake Model名、synthetic counts、fixture credential、Evidence IDは実機観測ではありません。canonical_vectorsの期待canonical文字列は規則から固定したgolden、request/projection/candidateは参照実装で生成したgoldenです。製品Goと実Runtimeはそれぞれ独立に照合する必要があります。synthetic_origin_key.hexを実機に使用しないでください。

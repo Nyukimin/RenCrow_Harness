@@ -1,0 +1,4095 @@
+{
+  "contract_version": "rencrow-harness-acceptance/v1",
+  "status": "proposed_not_executed",
+  "date": "2026-10-07",
+  "historical_row_count": 26,
+  "additional_test_count": 54,
+  "requirement_ids": [
+    "RH-001",
+    "RH-002",
+    "RH-003",
+    "RH-004",
+    "RH-005",
+    "RH-006",
+    "RH-007",
+    "RH-008",
+    "RH-009",
+    "RH-010",
+    "RH-011",
+    "RH-012",
+    "RH-013",
+    "RH-014",
+    "RH-015",
+    "RH-016",
+    "RH-017",
+    "RH-018",
+    "RH-019",
+    "RH-020",
+    "RH-021",
+    "RH-022",
+    "RH-023",
+    "RH-024",
+    "RH-025",
+    "RH-026"
+  ],
+  "functions": [
+    {
+      "function_id": "F01",
+      "name": "ValidateRunInput",
+      "phase": "P1",
+      "io": "StartInput→immutable command",
+      "precondition_and_effect": "caller scope、schema、bindingを検証。DB更新前",
+      "errors": "InvalidInput/PolicyRejected",
+      "postcondition": "無効commandは一件も実行へ渡さない",
+      "tests": [
+        "H02",
+        "H22",
+        "A01",
+        "A02",
+        "A21",
+        "A27",
+        "A58"
+      ]
+    },
+    {
+      "function_id": "F02",
+      "name": "LoadSnapshot",
+      "phase": "P2",
+      "io": "Thread/Task→PreparedSnapshot",
+      "precondition_and_effect": "State読取、checkpoint/raw整合検査",
+      "errors": "IntegrityBlocked/PersistenceUncertain",
+      "postcondition": "applied contextとpending queueを分離して返す",
+      "tests": [
+        "H03",
+        "H11",
+        "H25",
+        "A11",
+        "A17",
+        "A28",
+        "A36",
+        "A37",
+        "A60",
+        "A65"
+      ]
+    },
+    {
+      "function_id": "F03",
+      "name": "ClassifyOrigin",
+      "phase": "P1",
+      "io": "intake/relay proof→origin",
+      "precondition_and_effect": "MAC/issuer/hash/順序検査、本文を認証にしない",
+      "errors": "Unknown/Forbidden",
+      "postcondition": "不確かな入力を削除可能なHumanにしない",
+      "tests": [
+        "H14",
+        "H17",
+        "A05",
+        "A23",
+        "A30",
+        "A33",
+        "A48",
+        "A49",
+        "A67"
+      ]
+    },
+    {
+      "function_id": "F04",
+      "name": "AssembleContext",
+      "phase": "P1",
+      "io": "typed blocks+context entries→PromptPlan",
+      "precondition_and_effect": "決定的、copy、意味順序維持",
+      "errors": "InvalidContext",
+      "postcondition": "五区分とToolCall/Result順序を保持",
+      "tests": [
+        "H10",
+        "H14",
+        "H16",
+        "A03",
+        "A33",
+        "A46",
+        "A49",
+        "A59",
+        "A60"
+      ]
+    },
+    {
+      "function_id": "F05",
+      "name": "EstimateBudget",
+      "phase": "P3",
+      "io": "PromptPlan+MeasureResult→BudgetReport",
+      "precondition_and_effect": "LLM計数のbasis/revisionを照合",
+      "errors": "BudgetUnverified/CapacityBlocked",
+      "postcondition": "bytes推定をactual tokensと記録しない",
+      "tests": [
+        "H05",
+        "H07",
+        "H16",
+        "H24",
+        "A04",
+        "A24",
+        "A25",
+        "A29",
+        "A50",
+        "A71"
+      ]
+    },
+    {
+      "function_id": "F06",
+      "name": "PrepareSources",
+      "phase": "P4",
+      "io": "snapshot→inventory/index",
+      "precondition_and_effect": "raw論理load共有、refsと保護を検査",
+      "errors": "IntegrityBlocked",
+      "postcondition": "全source対応をHostで生成",
+      "tests": [
+        "H06",
+        "H09",
+        "H23",
+        "H24"
+      ]
+    },
+    {
+      "function_id": "F07",
+      "name": "BuildSelectionDataset",
+      "phase": "P4",
+      "io": "inventory→presented_sources/completion_links",
+      "precondition_and_effect": "候補一意性、全文2,048bytes等、handle付与",
+      "errors": "NoCandidates/CapacityBlocked",
+      "postcondition": "未提示sourceに削除権を与えない",
+      "tests": [
+        "H09",
+        "H18",
+        "A22",
+        "A23",
+        "A39",
+        "A51",
+        "A61"
+      ]
+    },
+    {
+      "function_id": "F08",
+      "name": "ApplySelection",
+      "phase": "P4",
+      "io": "operations→retention plan",
+      "precondition_and_effect": "exact quote、origin、順序、completion検証",
+      "errors": "SemanticFailure/IntegrityBlocked",
+      "postcondition": "撤回根拠と現在原文を保持",
+      "tests": [
+        "H02",
+        "H04",
+        "H06",
+        "H14",
+        "H17",
+        "A05",
+        "A23"
+      ]
+    },
+    {
+      "function_id": "F09",
+      "name": "BuildSummaryInput",
+      "phase": "P4",
+      "io": "retention/inventory→stage request",
+      "precondition_and_effect": "5namespace、前回summary一回、negative隔離",
+      "errors": "CapacityBlocked/ContractFailure",
+      "postcondition": "実行役promptなし、未提示を既読にしない",
+      "tests": [
+        "H01",
+        "H04",
+        "H10",
+        "H12",
+        "H15",
+        "H16",
+        "H18",
+        "A22",
+        "A26",
+        "A45",
+        "A61"
+      ]
+    },
+    {
+      "function_id": "F10",
+      "name": "ValidateSummary",
+      "phase": "P4",
+      "io": "completion→SummaryCandidate",
+      "precondition_and_effect": "schema/handle/検証Evidence/既知未了を確認",
+      "errors": "SemanticFailure",
+      "postcondition": "JSON正常だけで意味正常としない",
+      "tests": [
+        "H01",
+        "H04",
+        "H08",
+        "H10",
+        "H12",
+        "H15",
+        "H21",
+        "A15",
+        "A22",
+        "A26",
+        "A45"
+      ]
+    },
+    {
+      "function_id": "F11",
+      "name": "ProjectObservation",
+      "phase": "P4",
+      "io": "raw+range→bounded projection",
+      "precondition_and_effect": "text-only/inactiveとraw hashを検査",
+      "errors": "Protected/IntegrityBlocked",
+      "postcondition": "原本不変、範囲とpartialが正しい",
+      "tests": [
+        "H07",
+        "H19",
+        "H23",
+        "H24",
+        "A13",
+        "A39",
+        "A62"
+      ]
+    },
+    {
+      "function_id": "F12",
+      "name": "Emergency",
+      "phase": "P4",
+      "io": "snapshot→candidate",
+      "precondition_and_effect": "LLMなし、old semantic保持、古いexcerpt縮約",
+      "errors": "CapacityBlocked/IntegrityBlocked",
+      "postcondition": "semantic boundary不変、未処理Work保持",
+      "tests": [
+        "H07",
+        "H12",
+        "H19",
+        "H26",
+        "A24",
+        "A45",
+        "A51",
+        "A62"
+      ]
+    },
+    {
+      "function_id": "F13",
+      "name": "ValidateCandidate",
+      "phase": "P4",
+      "io": "candidate→ValidatedCandidate",
+      "precondition_and_effect": "refs、exact保持、count、revision、fence",
+      "errors": "Stale/CapacityBlocked/IntegrityBlocked",
+      "postcondition": "未検証candidateをcommitへ渡さない",
+      "tests": [
+        "H03",
+        "H06",
+        "H11",
+        "H13",
+        "H19",
+        "A06",
+        "A60",
+        "A62",
+        "A65"
+      ]
+    },
+    {
+      "function_id": "F14",
+      "name": "CommitCheckpoint",
+      "phase": "P4",
+      "io": "validated bytes→receipt",
+      "precondition_and_effect": "短いCAS transaction、保存後publish",
+      "errors": "Rejected/RestartRequired",
+      "postcondition": "checkpoint/pointer/receipt/event一括確定",
+      "tests": [
+        "H11",
+        "H13",
+        "H25",
+        "A06",
+        "A07",
+        "A17",
+        "A28",
+        "A65"
+      ]
+    },
+    {
+      "function_id": "F15",
+      "name": "InvokeModel",
+      "phase": "P3",
+      "io": "strict request→completion",
+      "precondition_and_effect": "Gatewayのみ、1physical attempt、終端検証",
+      "errors": "ModelContractFailed/Timeout",
+      "postcondition": "Tool fragmentから実行しない",
+      "tests": [
+        "H01",
+        "H02",
+        "H05",
+        "H18",
+        "H21",
+        "A08",
+        "A18",
+        "A26",
+        "A29",
+        "A41",
+        "A42",
+        "A52",
+        "A55",
+        "A59",
+        "A70",
+        "A71"
+      ]
+    },
+    {
+      "function_id": "F16",
+      "name": "DispatchTool",
+      "phase": "P2",
+      "io": "ToolIntent→Evidence/Attempt",
+      "precondition_and_effect": "policy、control、冪等意図、durable dispatch-start",
+      "errors": "PolicyRejected/EffectOutcomeUnknown",
+      "postcondition": "Actionなしの副作用なし",
+      "tests": [
+        "A02",
+        "A09",
+        "A10",
+        "A12",
+        "A17",
+        "A31",
+        "A34",
+        "A35",
+        "A39",
+        "A63",
+        "A70"
+      ]
+    },
+    {
+      "function_id": "F17",
+      "name": "ReconcileRun",
+      "phase": "P2",
+      "io": "old Run/receipts→resume basis",
+      "precondition_and_effect": "照会のみ。再実行禁止。新Run作成前",
+      "errors": "Restart/Integrity/EffectUnknown",
+      "postcondition": "新Run/Traceで同Taskの継続根拠を返す",
+      "tests": [
+        "H03",
+        "H11",
+        "H22",
+        "H26",
+        "A01",
+        "A07",
+        "A10",
+        "A11",
+        "A32",
+        "A37",
+        "A47",
+        "A52"
+      ]
+    },
+    {
+      "function_id": "F18",
+      "name": "ReadObservation",
+      "phase": "P2",
+      "io": "EvidenceID/range→bytes/coverage",
+      "precondition_and_effect": "ACL、size、hash、text境界検査",
+      "errors": "Missing/Forbidden/Integrity",
+      "postcondition": "最大64KiB、元Tool非実行",
+      "tests": [
+        "H23",
+        "A13",
+        "A18",
+        "A36",
+        "A39",
+        "A60",
+        "A64"
+      ]
+    },
+    {
+      "function_id": "F19",
+      "name": "ClassifyFailure",
+      "phase": "P1",
+      "io": "boundary/error→typed outcome",
+      "precondition_and_effect": "pure。unknownはunknown",
+      "errors": "ContractFailure",
+      "postcondition": "5compact outcomeとcontrolを混同しない",
+      "tests": [
+        "H05",
+        "H20",
+        "H25",
+        "H26",
+        "A14",
+        "A24",
+        "A41",
+        "A43",
+        "A52",
+        "A57"
+      ]
+    },
+    {
+      "function_id": "F20",
+      "name": "BuildRunResult",
+      "phase": "P2",
+      "io": "terminal records→RunResult",
+      "precondition_and_effect": "final receiptとverificationを照合",
+      "errors": "InvalidTerminal",
+      "postcondition": "Task意味達成とRun完了を分離",
+      "tests": [
+        "H08",
+        "H15",
+        "H20",
+        "A14",
+        "A15",
+        "A38",
+        "A40"
+      ]
+    },
+    {
+      "function_id": "F21",
+      "name": "ServeNative",
+      "phase": "P2",
+      "io": "NDJSON request→typed response/events",
+      "precondition_and_effect": "handshake、schema、frame上限、backpressure",
+      "errors": "RPCError/Disconnected",
+      "postcondition": "全入口同じService、stdout非混濁",
+      "tests": [
+        "A08",
+        "A16",
+        "A18",
+        "A19",
+        "A20",
+        "A21",
+        "A27",
+        "A38",
+        "A40",
+        "A58"
+      ]
+    },
+    {
+      "function_id": "F22",
+      "name": "AdmitTask",
+      "phase": "P2",
+      "io": "new input+upstream→Turn/Task/Run/receipt",
+      "precondition_and_effect": "caller/key一意、全ID/durable intake一括",
+      "errors": "Conflict/Forbidden/Persistence",
+      "postcondition": "CORE子TaskとCLI Root Taskを同じ規則で発行",
+      "tests": [
+        "A01",
+        "A09",
+        "A11",
+        "A17",
+        "A19",
+        "A20",
+        "A44",
+        "A47",
+        "A49"
+      ]
+    },
+    {
+      "function_id": "F23",
+      "name": "ApplyQueuedInput",
+      "phase": "P2",
+      "io": "InputAppendInput→receipt/applied event",
+      "precondition_and_effect": "disposition、queue/control線形化",
+      "errors": "Conflict/Cancelled",
+      "postcondition": "pendingだけでsnapshot staleにしない",
+      "tests": [
+        "A06",
+        "A12",
+        "A30",
+        "A38",
+        "A43",
+        "A66"
+      ]
+    },
+    {
+      "function_id": "F24",
+      "name": "MeasureFinalPrompt",
+      "phase": "P3",
+      "io": "strict Chat payload→MeasureResult",
+      "precondition_and_effect": "Gateway/Runtime/Backend同一template、生成なし",
+      "errors": "Unsupported/BudgetUnverified",
+      "postcondition": "final tokensとfingerprintを取得",
+      "tests": [
+        "A04",
+        "A19",
+        "A25",
+        "A26",
+        "A29",
+        "A40",
+        "A42",
+        "A50",
+        "A55",
+        "A56",
+        "A71"
+      ]
+    },
+    {
+      "function_id": "F25",
+      "name": "ForkSession",
+      "phase": "P4",
+      "io": "checkpoint→new Thread",
+      "precondition_and_effect": "ACL、原本closure、active effectなし",
+      "errors": "Integrity/BUSY",
+      "postcondition": "filesystemを巻戻さず原本参照を保持",
+      "tests": [
+        "A36"
+      ]
+    },
+    {
+      "function_id": "F26",
+      "name": "DelegateFromCore",
+      "phase": "P5",
+      "io": "CORE Task/context→native request/result",
+      "precondition_and_effect": "5block保持、upstream、単一委譲Action",
+      "errors": "Contract/Unavailable",
+      "postcondition": "旧loop/keyword経路へfallbackしない",
+      "tests": [
+        "A03",
+        "A15",
+        "A20",
+        "A31",
+        "A40",
+        "A46",
+        "A53",
+        "A69"
+      ]
+    },
+    {
+      "function_id": "F27",
+      "name": "LoadTrustedExtensions",
+      "phase": "P2",
+      "io": "trusted path/manifest→scoped metadata/body",
+      "precondition_and_effect": "path/size/trust、固定hooks、policy上限",
+      "errors": "Forbidden/InvalidExtension",
+      "postcondition": "skill/AGENTS内容をHumanや権限にしない",
+      "tests": [
+        "A33",
+        "A63"
+      ]
+    },
+    {
+      "function_id": "F28",
+      "name": "MigrateAndBackup",
+      "phase": "P2",
+      "io": "schema/config/store→receipt",
+      "precondition_and_effect": "startup exclusion、SQLite backup、restore closure",
+      "errors": "StorageInvalid/Integrity",
+      "postcondition": "別DB/rootへfallbackしない",
+      "tests": [
+        "A07",
+        "A16",
+        "A18",
+        "A19",
+        "A28",
+        "A32",
+        "A37"
+      ]
+    },
+    {
+      "function_id": "F29",
+      "name": "ReconcileProcess",
+      "phase": "P2",
+      "io": "Attempt/token→effect state",
+      "precondition_and_effect": "host incarnation/PID開始token、OS tree stop",
+      "errors": "EffectUnknown",
+      "postcondition": "無関係processをkillしない",
+      "tests": [
+        "A10",
+        "A12",
+        "A16",
+        "A32",
+        "A34",
+        "A64"
+      ]
+    },
+    {
+      "function_id": "F30",
+      "name": "ValidateDeployment",
+      "phase": "P1",
+      "io": "config→validated runtime profile",
+      "precondition_and_effect": "absolute roots、mode、capability、finite limits",
+      "errors": "ConfigInvalid/Unavailable",
+      "postcondition": "標準Go、CORE不要、未対応sandboxを偽装しない",
+      "tests": [
+        "A02",
+        "A16",
+        "A19",
+        "A34",
+        "A35",
+        "A40",
+        "A42",
+        "A50",
+        "A54",
+        "A68",
+        "A69"
+      ]
+    },
+    {
+      "function_id": "F31",
+      "name": "PlanModelRetry",
+      "phase": "P3",
+      "io": "failure/ordinal/budget/revisions→RetryDecision",
+      "precondition_and_effect": "pure; driver records next Attempt and cancellation-aware wait",
+      "errors": "RetryExhausted/Cancelled/ModelUnknown",
+      "postcondition": "act max 2; no summary retry",
+      "tests": [
+        "A41",
+        "A42",
+        "A43",
+        "A44",
+        "A45",
+        "A52",
+        "A57",
+        "A70",
+        "A71"
+      ]
+    },
+    {
+      "function_id": "F32",
+      "name": "MaterializeContextRevision",
+      "phase": "P1",
+      "io": "typed block→revision/PreparedContextBlock",
+      "precondition_and_effect": "length-prefixed exact bytes; producer and consumer shared primitive",
+      "errors": "ContextMismatch",
+      "postcondition": "five logical blocks; no user input duplication",
+      "tests": [
+        "A46",
+        "A53"
+      ]
+    },
+    {
+      "function_id": "F33",
+      "name": "SignOriginProof",
+      "phase": "P5",
+      "io": "CORE authenticated intake→OriginProof",
+      "precondition_and_effect": "private HMAC key; original raw only",
+      "errors": "OriginUnavailable/KeyUnavailable",
+      "postcondition": "same signed source; no fabricated Human",
+      "tests": [
+        "A48",
+        "A53",
+        "A67"
+      ]
+    },
+    {
+      "function_id": "F34",
+      "name": "PersistIntake",
+      "phase": "P2",
+      "io": "CLI/CORE input→IntakeReceipt",
+      "precondition_and_effect": "one local transaction; proof/nonce and immutable raw",
+      "errors": "InvalidProof/PersistenceUncertain",
+      "postcondition": "all entrypoints share durable intake",
+      "tests": [
+        "A48",
+        "A49",
+        "A53",
+        "A58",
+        "A67"
+      ]
+    },
+    {
+      "function_id": "F35",
+      "name": "ResolveResumeLimits",
+      "phase": "P2",
+      "io": "new limits/host cap/clock→frozen budget",
+      "precondition_and_effect": "limits required; new deadline; persist before return",
+      "errors": "InvalidLimits/DeadlineInvalid",
+      "postcondition": "new Run explicit; old consumption kept",
+      "tests": [
+        "A44",
+        "A47"
+      ]
+    },
+    {
+      "function_id": "F36",
+      "name": "VerifyReleaseSources",
+      "phase": "P0",
+      "io": "reference/manifest/observed/build→provenance report",
+      "precondition_and_effect": "read only baseline; no automatic old deployment update",
+      "errors": "SourceMismatch/ObservationMissing",
+      "postcondition": "no pin/source/runtime conflation",
+      "tests": [
+        "A54",
+        "A68"
+      ]
+    },
+    {
+      "function_id": "F37",
+      "name": "EncodeCanonicalContract",
+      "phase": "P1",
+      "io": "typed logical/final/mutation/candidate→bytes/digests",
+      "precondition_and_effect": "exact decimal、LP/CJ1、用途別field集合、モデル差を再実装しない",
+      "errors": "InvalidEncoding/DigestMismatch",
+      "postcondition": "golden bytesを両側の独立実装で一致",
+      "tests": [
+        "A55",
+        "A56",
+        "A58",
+        "A59",
+        "A60",
+        "A61",
+        "A65",
+        "A67"
+      ]
+    },
+    {
+      "function_id": "F38",
+      "name": "BuildTypedEvent",
+      "phase": "P2",
+      "io": "durable fact→Event.payload",
+      "precondition_and_effect": "type別closed field、ID対応、private rawの除外",
+      "errors": "InvalidEvent",
+      "postcondition": "同じpayloadを保存/API再取得",
+      "tests": [
+        "A66"
+      ]
+    },
+    {
+      "function_id": "F39",
+      "name": "LoadHostAssets",
+      "phase": "P2",
+      "io": "config/registry/skills/hooks→frozen assets",
+      "precondition_and_effect": "trusted root・size・metadata・key format",
+      "errors": "InvalidConfig/UntrustedAsset",
+      "postcondition": "同一policy snapshot、未登録拒否",
+      "tests": [
+        "A63",
+        "A64",
+        "A67"
+      ]
+    },
+    {
+      "function_id": "F40",
+      "name": "AssembleStrictStream",
+      "phase": "P3",
+      "io": "strict SSE→staged ModelCompletion",
+      "precondition_and_effect": "call index/UTF8/terminal/DONE/receipt照合",
+      "errors": "Incomplete/ContractFailure/Unknown",
+      "postcondition": "Tool未dispatchのまま全出力終端を検証",
+      "tests": [
+        "A70"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "test_id": "H01",
+      "category": "historical_regression",
+      "title": "要約へTool記法が混入",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 24,
+        "history_row": 1,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/21（V2導入前）",
+        "issue": "Qwenが要約ではなくtool-call XMLを返し、それが引き継ぎとして次の入力に入り、目的や証拠を取り違えた。",
+        "countermeasure": "Gatewayのno-tools要求と過去tool履歴の扱いを修正。不正要約を実行済み履歴として扱わない復旧指示を作成。",
+        "reported_reach_and_limits": "保存した失敗要求2件の再送と実自動圧縮1件の成功を記録。その後9/25に同種の問題が再発。一般的な解消率は未確認。[E01]"
+      },
+      "functions": [
+        "F09",
+        "F10",
+        "F15"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-013"
+      ],
+      "condition": "no-tools要求にToolIntentまたはtool-call XML相当の不正出力を返す。LLM層からの契約違反を注入する。 新Harnessが実際に利用するChat strict pathとResponses既存pathを別々に試す。",
+      "expected": "不正本文を要約・実行成功へ採用しない。LLM ownerの正規化試験とHarnessのSummary拒否を別々に通す。 Chat側未適用を残さず、strict contract receiptを照合する。",
+      "owner": "RenCrow_LLM / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H02",
+      "category": "historical_regression",
+      "title": "要求schemaと参照生成の分離",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 25,
+        "history_row": 2,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/22〜23：候補CLI初期試験",
+        "issue": "要求の`message`型欠落でHTTP 400。修正後もモデルがIDだけを返し、hash/range付き参照のschemaに適合しなかった。",
+        "countermeasure": "要求形式を修正。意味判断と参照生成を分離し、ID・hash・rangeをhost側で結び付ける。",
+        "reported_reach_and_limits": "CLI・fixtureの試験を記録。この段階の通常Compactionへの接続成功とは別。[S01]"
+      },
+      "functions": [
+        "F01",
+        "F08",
+        "F15"
+      ],
+      "requirements": [
+        "RH-006",
+        "RH-008"
+      ],
+      "condition": "既知のrequest型欠落、未知handle、hash/rangeを返さないモデル応答を投入する。",
+      "expected": "無効要求を送信前に拒否し、ID/hash/rangeはhost inventoryから構成する。LLMへの転記依存を残さない。",
+      "owner": "Harness LLM client / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H03",
+      "category": "historical_regression",
+      "title": "metadataとreplay境界",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 26,
+        "history_row": 3,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/22〜23：capture確認",
+        "issue": "履歴のmetadataやrollback／過去Compactionの境界を落とすと、古い指示を復活させ得る。",
+        "countermeasure": "metadataを保持。未知の記録はopaqueとして残し、扱えないreplay境界は拒否。",
+        "reported_reach_and_limits": "部品修正・回帰を記録。以後も元データを直接書き換える方式は採用していない。[S02]"
+      },
+      "functions": [
+        "F02",
+        "F13",
+        "F17"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-004",
+        "RH-015"
+      ],
+      "condition": "metadataを省略・未知化し、rollback/過去checkpoint境界を含むfixtureをreplayする。",
+      "expected": "既知の等価正規化だけを許可。未知境界を推測通過せず、旧指示を新しい有効指示にしない。",
+      "owner": "Harness State / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H04",
+      "category": "historical_regression",
+      "title": "撤回本文の再混入",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 27,
+        "history_row": 4,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/23 01:37までに報告",
+        "issue": "撤回した合言葉が「撤回済み」という注記として要約に再混入した。検証用の削除済み本文が生成入力に入っていた。",
+        "countermeasure": "`negative_validation`を要約生成から分離し、検証側だけで扱う。",
+        "reported_reach_and_limits": "関連診断・試験の改善を記録。全経路で撤回内容が再出現しない保証は未確認。[E02][S03]"
+      },
+      "functions": [
+        "F08",
+        "F09",
+        "F10"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-013"
+      ],
+      "condition": "negative-validation用の撤回済み文字列を含む検証入力と、分離済みの生成入力を用意する。",
+      "expected": "生成要求へ撤回済み本文を漏らさず、再生成されたSummaryに復活しない。",
+      "owner": "Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H05",
+      "category": "historical_regression",
+      "title": "容量と不完全生成",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 28,
+        "history_row": 5,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/22〜23：自動圧縮",
+        "issue": "ContextLimit／出力上限で要約が完了せず停止。失敗した要求のusageも保存されなかった。",
+        "countermeasure": "completed・failed・incompleteを分け、使用量不明をunknownとして残す方針。",
+        "reported_reach_and_limits": "この時点のusage保存・自動復旧対策は未実装の記録。後の「不良計測行を捨てる」修正とは別。[S04]"
+      },
+      "functions": [
+        "F05",
+        "F15",
+        "F19"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-011",
+        "RH-014"
+      ],
+      "condition": "ContextLimit、length、incomplete、usage欠落を返す。",
+      "expected": "completedへ丸めず、保持必須部分は切らない。usageはunknown。有限のEmergency/Blocked分類を行う。",
+      "owner": "RenCrow_LLM / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H06",
+      "category": "historical_regression",
+      "title": "190件inventoryの完全性",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 29,
+        "history_row": 6,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/23 14:01",
+        "issue": "source-IDが期待190件に対して188件。2件欠けたため候補が不採用となった。",
+        "countermeasure": "IDの全件転記をモデルに任せず、hostでinventory・coverage・hashを生成。要約要求を1回に整理。",
+        "reported_reach_and_limits": "後続の190/190照合、commit・cold resumeを記録。旧失敗との比較であり、一般的な削減率ではない。[E03][S05]"
+      },
+      "functions": [
+        "F06",
+        "F08",
+        "F13"
+      ],
+      "requirements": [
+        "RH-006",
+        "RH-007"
+      ],
+      "condition": "合成source190件に対しモデルは188件相当しか言及しない。",
+      "expected": "host inventoryは190件を保持する。重要参照の言及件数と全件coverageを区別し、適用対象はhostが照合する。",
+      "owner": "Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H07",
+      "category": "historical_regression",
+      "title": "通常入力が縮まない",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 30,
+        "history_row": 7,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/23",
+        "issue": "圧縮してもtool出力やReasoningがそのまま残り、通常入力が大きいまま、また自動圧縮が起きた。",
+        "countermeasure": "安全に除外できるReasoningを整理。完了済みexecの原文はhash等を照合して参照化する。",
+        "reported_reach_and_limits": "Linuxの手動圧縮・原文取得・再開の試験を記録。長時間の自動圧縮loop全体の解消は未確認。[S06]"
+      },
+      "functions": [
+        "F05",
+        "F11",
+        "F12"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-006",
+        "RH-011"
+      ],
+      "condition": "大量Tool結果・Work・reasoningと、次の通常要求を含むfixtureを用意する。",
+      "expected": "安全な参照化/要約後の実際の次要求を測る。圧縮表示だけで縮小成功にしない。",
+      "owner": "Harness / Evidence owner",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H08",
+      "category": "historical_regression",
+      "title": "未完了の誤完了",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 31,
+        "history_row": 8,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/23 17:46〜18:41",
+        "issue": "要約が未完了の作業を完了扱いし、テスト成功を誤って引き継いだ。",
+        "countermeasure": "未完了を明示し、原本と要求を再確認したうえで再圧縮。",
+        "reported_reach_and_limits": "個別の意味訂正と通常tool復帰を記録。全ての完了判定が正しいという保証ではない。[E04][S07]"
+      },
+      "functions": [
+        "F10",
+        "F20"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-011"
+      ],
+      "condition": "未実施テストをpassedとするSummaryを返す。",
+      "expected": "既知の証拠と矛盾するSummaryを拒否し、Task成功にしない。検証未実施を保持する。",
+      "owner": "Harness / CORE completion owner",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H09",
+      "category": "historical_regression",
+      "title": "選別材料の過剰関連付け",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 32,
+        "history_row": 9,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/24 00:29の調査記録",
+        "issue": "選別入力に同じthreadの大量のtool本文を入れ、選別段自体が肥大化し得た。",
+        "countermeasure": "同thread・後続というだけで関連付けず、host検証済みの明示リンクを使う。",
+        "reported_reach_and_limits": "部品実装・回帰を記録。旧運用の43回の圧縮を、この新しい問題のせいとは確定していない。[S08]"
+      },
+      "functions": [
+        "F06",
+        "F07"
+      ],
+      "requirements": [
+        "RH-006",
+        "RH-013"
+      ],
+      "condition": "同thread内に大量の無関係Tool出力を置く。",
+      "expected": "明示された検証済みlinkだけを選別材料にする。選別input量とSummary input量を別計測する。 Completion linkの全文size、唯一性、origin、nonpartial/nonactive条件を検査する。",
+      "owner": "Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H10",
+      "category": "historical_regression",
+      "title": "末尾要約指示の意味保持",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 33,
+        "history_row": 10,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/24 22:43",
+        "issue": "要約が「完了結果を確認しました。」だけになり、作業状態が失われた。Gatewayが要約指示を先頭側へ移していた。",
+        "countermeasure": "当初は末尾に明示依頼を追加。9/25にGateway側の正規化へ対策を移管。",
+        "reported_reach_and_limits": "実Qwenの隔離試験を記録。通常の圧縮成功表示だけでは要約内容の健全性を保証できない。[E05][S09]"
+      },
+      "functions": [
+        "F04",
+        "F09",
+        "F10"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-013"
+      ],
+      "condition": "末尾の段指示と、Gatewayが追加する注意を区別した要求を通す。",
+      "expected": "変換前後の意味順序をLLM ownerのreceiptで照合。極端に空疎な応答を正常Summaryにしない。",
+      "owner": "RenCrow_LLM / CORE bridge",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H11",
+      "category": "historical_regression",
+      "title": "cold resumeの既定値等価性",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 34,
+        "history_row": 11,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/24：cold resume試験",
+        "issue": "metadataの「なし」と既定値の差により、再起動後のmarker／fresh出力照合がIntegrityBlockedになった。",
+        "countermeasure": "`same_harness_metadata`で等価な既定値を正規化。再起動を含む回帰を追加。",
+        "reported_reach_and_limits": "修正を外すと失敗し、修正後のcold resumeが通る試験を記録。captureの初期InvalidEvidenceとは別の不具合。[E06][S10]"
+      },
+      "functions": [
+        "F02",
+        "F13",
+        "F14",
+        "F17"
+      ],
+      "requirements": [
+        "RH-009",
+        "RH-015"
+      ],
+      "condition": "metadataの省略と正式defaultの違いを含むcheckpointを保存・再読込する。",
+      "expected": "定義済みの等価性だけを正規化し、それ以外の改変はIntegrityBlocked。",
+      "owner": "Harness State / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H12",
+      "category": "historical_regression",
+      "title": "Tool記法再発時の有限失敗",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 35,
+        "history_row": 12,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/25",
+        "issue": "`<tool_call>...update_plan...`が再び要約本文として採用され、状態が失われた。",
+        "countermeasure": "tool記法を要約として採用しない。Gatewayの注意を調整し、1回の再送でも不正ならSemantic failure→Emergency。",
+        "reported_reach_and_limits": "同じ失敗要求の再送改善と配備を記録。全モデルでの無再発は未確認。[E07][S11]"
+      },
+      "functions": [
+        "F09",
+        "F10",
+        "F12"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-011",
+        "RH-012"
+      ],
+      "condition": "初回および許可された補助再送でも不正な要約を返す。 新Harnessが実際に利用するChat strict pathとResponses既存pathを別々に試す。",
+      "expected": "再試行を有限にし、Summaryへ不採用。NormalからEmergencyに遷移したことを記録する。 Chat側未適用を残さず、strict contract receiptを照合する。",
+      "owner": "RenCrow_LLM / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H13",
+      "category": "historical_regression",
+      "title": "queueとstaleの分離",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 36,
+        "history_row": 13,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/25〜26の運用／9/26対策",
+        "issue": "圧縮中に届いた入力のため`pending input`／`candidate is stale`となり、数分かけた要約を破棄してターンが失敗した。",
+        "countermeasure": "まだ履歴に記録していないqueue入力を開始拒否・stale判定理由にしない。真のsnapshot変更等の検証は維持。",
+        "reported_reach_and_limits": "source修正`e7f265987`を9/26 19:54にcommit。長時間運用での無再発は未確認。[E08][G01]"
+      },
+      "functions": [
+        "F13",
+        "F14"
+      ],
+      "requirements": [
+        "RH-001",
+        "RH-009"
+      ],
+      "condition": "Compaction中に通常入力をqueueへ追加する場合と、context/control revisionを変更する場合を分ける。",
+      "expected": "queueだけなら適合candidateを採用可能。真のrevision変更または取消なら拒否する。",
+      "owner": "CORE Control / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H14",
+      "category": "historical_regression",
+      "title": "Human/Unknownと古いメモ",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 37,
+        "history_row": 14,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/26 13:21までに報告",
+        "issue": "Human／Unknownとして残る古いメッセージが3→19件へ増加。古いメモを現在の依頼として誤読した。",
+        "countermeasure": "Hostの内部contextを最新1件にし、保持メッセージに時系列注記。入力元の申告を必須化。",
+        "reported_reach_and_limits": "source修正`13843acd2`を9/26 14:11にcommit。Human／Unknownを無条件削除する対策ではない。[E09][G02]"
+      },
+      "functions": [
+        "F03",
+        "F04",
+        "F08"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-004"
+      ],
+      "condition": "origin不明、Hostの重複context、古いHuman/Automationメモを含む履歴を複数回圧縮する。",
+      "expected": "originを推測しない。同source Hostは最新revisionへ投影。Human/Unknownの保護を維持する。",
+      "owner": "CORE intake / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H15",
+      "category": "historical_regression",
+      "title": "開始手順の反復",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 38,
+        "history_row": 15,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/27 09:47までに報告",
+        "issue": "圧縮後に現在地を見失い、同じhandoff・開始手順を何度も読み直した。圧縮間隔も短くなった。",
+        "countermeasure": "最新メッセージを`newest`と明示し、要約が現在地を持つよう注記を修正。開始手順と継続指示の運用を見直す。",
+        "reported_reach_and_limits": "`8837015ef`を9/27 09:55にcommit、配備報告あり。長時間の再発減少は未確認。[E10][G03]"
+      },
+      "functions": [
+        "F09",
+        "F10",
+        "F20"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-011"
+      ],
+      "condition": "開始時の手順と最新の未完了手順が異なる長作業fixtureを用意する。",
+      "expected": "現在地・未完了・次作業を区別し、完了証拠なしに実施済みを捏造しない。通常再開で不要な開始手順反復を評価する。",
+      "owner": "Harness / CORE",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H16",
+      "category": "historical_regression",
+      "title": "prefix cache最適化の独立評価",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 39,
+        "history_row": 16,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/27：性能対策",
+        "issue": "要約要求で通常turnのprefix cacheを共有できず、再度長いprefillが必要になる。",
+        "countermeasure": "条件を満たす途中turnでは通常promptを延長する方式に変更。",
+        "reported_reach_and_limits": "`8cc3a5900`を9/27 11:24にcommit。実Qwenでのcache再利用・速度・品質の統制比較は未確認。[S12][G04]"
+      },
+      "functions": [
+        "F04",
+        "F05",
+        "F09"
+      ],
+      "requirements": [
+        "RH-012",
+        "RH-013",
+        "RH-014"
+      ],
+      "condition": "隔離Summaryと候補のcache共有方式を同一入力・bindingで比較する。",
+      "expected": "既定は隔離方式。Backend上のcache再利用とprefillを測り、論理hashだけで高速化を主張しない。",
+      "owner": "RenCrow_LLM / Backend / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H17",
+      "category": "historical_regression",
+      "title": "Automationの選別権限",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 40,
+        "history_row": 17,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/27：入力元対策",
+        "issue": "automation由来の入力までUnknownとして保持され、古い監督メモを選別できなかった。",
+        "countermeasure": "受付記録・thread・本文hashが一致するAutomation入力を選別対象へ追加。Humanへの削除権限とは分ける。",
+        "reported_reach_and_limits": "`f229b6756`を9/27 12:37にcommit。実運用の削除量・誤削除なしは未確認。[S13][G05]"
+      },
+      "functions": [
+        "F03",
+        "F08"
+      ],
+      "requirements": [
+        "RH-002",
+        "RH-003",
+        "RH-004"
+      ],
+      "condition": "HumanとAutomationの訂正、受付hash/Thread違いを組み合わせる。",
+      "expected": "AutomationからHumanを失効できない。originの証拠不一致はUnknown。常設制約を無根拠削除しない。",
+      "owner": "CORE intake / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H18",
+      "category": "historical_regression",
+      "title": "選別段への実行instruction混入",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 41,
+        "history_row": 18,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/28〜29／9/29対策",
+        "issue": "JSONを返す選別段に実行役の基本指示が混入。データ中の依頼を実行しようとしてJSONが返らず、Emergencyを反復した。",
+        "countermeasure": "意味判断段から実行役のinstructions／toolsを外し、段専用指示＋データに限定。",
+        "reported_reach_and_limits": "`8fc9ea7ab`を9/29 23:08にcommit。これだけで全Normal要求の成功が確認できたわけではない。[E11][S14][G06]"
+      },
+      "source_note": "詳細な対象modelはCOMPACTION_SPEC.md第3部2026-09-29でGPT120B-M5Maxと記載。Qwenと推定しない。",
+      "functions": [
+        "F07",
+        "F09",
+        "F15"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-013"
+      ],
+      "condition": "通常実行用instructionが付いた選別要求と、段専用要求を比較する。",
+      "expected": "production選別要求は段専用instruction＋data、toolsなし。詳細記録の対象がGPT120Bである点を保持する。 詳細原資料はGPT120Bであり、Qwenだけの固有故障とは説明しない。",
+      "owner": "Harness / CORE bridge",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H19",
+      "category": "historical_regression",
+      "title": "Emergency連続時の縮小",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 42,
+        "history_row": 19,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "9/28〜29／9/29対策",
+        "issue": "Emergencyでもmarker等が縮まず、`candidate does not shrink`／CapacityBlockedへ至った。",
+        "countermeasure": "以前のcheckpointより前の出力・抜粋markerを、原本で検証して小さい参照markerへ変換。",
+        "reported_reach_and_limits": "同commitで実装。隔離試験で17.4万→11.5万文字の改善を記録。ただしSummary本文なし、Normal未成立などが残った。文字数をtoken削減率とは扱わない。[E12][S15][G06]"
+      },
+      "source_note": "詳細な対象modelはCOMPACTION_SPEC.md第3部2026-09-29でGPT120B-M5Maxと記載。Qwenと推定しない。",
+      "functions": [
+        "F11",
+        "F12",
+        "F13"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-007",
+        "RH-011"
+      ],
+      "condition": "Normalが連続失敗し、excerpt markerと未要約Workが累積するfixtureを用意する。",
+      "expected": "durable/semantic境界を分離し、検証可能な旧excerptを小さい参照へ投影。縮小不能ならCapacityBlockedでありNormal成功ではない。",
+      "owner": "Harness / Evidence owner",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H20",
+      "category": "historical_regression",
+      "title": "Normal失敗理由のlog欠落",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 43,
+        "history_row": 20,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/3 23:53",
+        "issue": "V2がEmergencyをcommitした。該当時間帯の警告ログがなく、Normalの失敗理由を特定できなかった。",
+        "countermeasure": "V2専用診断CLIでcheckpoint／Normal／Emergencyとログ欠落を分けて集計。",
+        "reported_reach_and_limits": "原因未特定。Emergency commitをNormal成功とは扱っていない。[E13]"
+      },
+      "functions": [
+        "F19",
+        "F20"
+      ],
+      "requirements": [
+        "RH-011",
+        "RH-014",
+        "RH-016"
+      ],
+      "condition": "Emergency checkpointはあるがNormal stage receiptが欠けるfixtureを用意する。",
+      "expected": "原因はunknownとして集計。EmergencyをNormal成功にしない。新実装はstage receiptを相関できること。",
+      "owner": "CORE diagnostics / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H21",
+      "category": "historical_regression",
+      "title": "要約応答の異種item",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 44,
+        "history_row": 21,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/4 02:10",
+        "issue": "Normal要約応答にassistant以外の項目が混ざり、検証で拒否されEmergencyへ移った。",
+        "countermeasure": "警告ログID`588360`と同じthreadのV2 checkpointを照合し、失敗段を特定。",
+        "reported_reach_and_limits": "拒否理由は確認できたが、返った項目の種類と恒久対策の実運用解消は未確認。[E13]"
+      },
+      "functions": [
+        "F10",
+        "F15"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-011"
+      ],
+      "condition": "Summary応答へ許可外role/itemを混入させる。",
+      "expected": "単一の許可された最終Summaryとして検証できなければ拒否。混入itemの種類を推測で補わない。",
+      "owner": "RenCrow_LLM / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H22",
+      "category": "historical_regression",
+      "title": "複数入口のdispatch統一",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 45,
+        "history_row": 22,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/4／22:32対策commit",
+        "issue": "V2有効時でもlocal Compactionの入口から旧経路を選び得た。",
+        "countermeasure": "自動・手動等のlocal入口を共通判定に揃え、V2有効ならV2へdispatch。",
+        "reported_reach_and_limits": "source修正`76768234c`を確認。各threadの実際の方式はV2 metadata／ログで別途判定する。[G07]"
+      },
+      "functions": [
+        "F01",
+        "F17"
+      ],
+      "requirements": [
+        "RH-001",
+        "RH-012"
+      ],
+      "condition": "手動・自動・resume経路に異なるfeature選択を与える。",
+      "expected": "managed routeは唯一のdriverへ入り、旧方式へfallbackしない。切替対象外runtimeは明示区別する。",
+      "owner": "CORE composition / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H23",
+      "category": "historical_regression",
+      "title": "構造化textのcanonical投影",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 46,
+        "history_row": 23,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/4 23:37〜10/5 00:32",
+        "issue": "`InputText`配列等の構造化テキスト出力を正本と照合できず、削減対象にできなかった。通常の切詰め後には保護扱いになる残件も見つかった。",
+        "countermeasure": "text-only出力を決定的なcanonical表現へ投影し、hash・切詰め・参照・marker検証を揃える。mixed mediaは保護。",
+        "reported_reach_and_limits": "`fc8ae26d5`を10/5 00:32にcommit。子の最初の納品ではRust環境不足で試験未実行だったため、その報告だけを成功証拠とはしていない。[E14][G08]"
+      },
+      "functions": [
+        "F06",
+        "F11",
+        "F18"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-006",
+        "RH-007"
+      ],
+      "condition": "InputText配列、空part、改行、truncation、mixed mediaを投入する。",
+      "expected": "text-onlyはversion付き決定的投影、raw/projection hashとrangeを区別。mixed mediaはprotected。",
+      "owner": "CORE Evidence / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H24",
+      "category": "historical_regression",
+      "title": "freshと既存markerの容量比較",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 47,
+        "history_row": 24,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/5 02:21確認／08:11対策commit",
+        "issue": "正本にcanonical構造化テキストはあるが、Emergencyの容量比較がliveの文字列だけを見ており、その出力を縮約できなかった。",
+        "countermeasure": "fresh pairだけcanonicalテキストへフォールバック。既存markerへの無条件適用は避ける。",
+        "reported_reach_and_limits": "`970c50380`で修正。後述の保存ログ破損を直したcommitではない。[E15][G09]"
+      },
+      "functions": [
+        "F05",
+        "F06",
+        "F11"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-006",
+        "RH-009"
+      ],
+      "condition": "canonicalにtextがありlive表示だけでは比較できないfresh結果と、既存markerを用意する。",
+      "expected": "freshは検証済みcanonical projectionで比較。既存markerへ無条件fallbackしない。",
+      "owner": "Harness / Evidence owner",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H25",
+      "category": "historical_regression",
+      "title": "不良計測と権威的破損の分離",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 48,
+        "history_row": 25,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/5の停止調査／12:20対策commit",
+        "issue": "保存済み`token_count`の1300行目が`secondary`付近で不完全なJSONになり、原本読み込みの拒否でV2が止まった。",
+        "countermeasure": "明確に判別できる不良計測情報だけをcanonical読込時に除外。会話等はfail closed、原本bytesは変更しない。",
+        "reported_reach_and_limits": "`9a5e1e0c0`で実装・配備。184＋79件の関連試験を記録。parse拒否は解消したが、対象threadのinventoryは「確定したV2 checkpointなし」。V2全体の成功は未確認。[E16][S16][G10]"
+      },
+      "functions": [
+        "F02",
+        "F14",
+        "F19"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-014",
+        "RH-015"
+      ],
+      "condition": "明確な不良計測、曖昧なJSON破損、原本/checkpoint破損を別fixtureにする。",
+      "expected": "owner allowlistだけ除外しmetrics_missing。原本不変。checkpointなしをparse成功から推定しない。",
+      "owner": "Switch canonical loader / CORE Evidence / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "H26",
+      "category": "historical_regression",
+      "title": "レイヤー別復旧の境界",
+      "source": {
+        "source_id": "D02",
+        "file": "COMPACTION_HISTORY.md",
+        "line": 49,
+        "history_row": 26,
+        "file_sha256": "5d609f339e221d1b46102f5739b51d61668c0166ce622d70d87528d4ec2362ac"
+      },
+      "historical_statement": {
+        "period": "10/5：残件の提案",
+        "issue": "不良箇所の種類に関係なく全体停止すると、計測情報・索引・要約・原本の故障を区別できない。",
+        "countermeasure": "計測は捨てる、索引・入力・候補等は健全な原本から作り直す、原本やcheckpointの不整合は隔離・停止、というレイヤー別案。",
+        "reported_reach_and_limits": "計測不良の除外のみ実装・配備済み。他の共通自動復旧は提案段階。[S17]"
+      },
+      "source_note": "この行は共通復旧の提案であり、全レイヤーの既存実装成功を意味しない。",
+      "functions": [
+        "F12",
+        "F17",
+        "F19"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-009",
+        "RH-015"
+      ],
+      "condition": "index/組立candidateの不良と、raw/checkpointの不良を分けて注入する。",
+      "expected": "健全原本からの決定的派生再生成は最大1回。確定raw/checkpointの推測修復・古いcheckpointへの暗黙fallbackはしない。",
+      "owner": "Harness State/Evidence / Harness",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A01",
+      "category": "harness_contract",
+      "title": "ID発行owner",
+      "functions": [
+        "F01",
+        "F17",
+        "F22"
+      ],
+      "requirements": [
+        "RH-017",
+        "RH-019"
+      ],
+      "condition": "standaloneとCORE委譲を同じfixtureで開始/再開",
+      "expected": "Canonical prefixが一致し、子Task関係を保持。resumeは同Taskかつ新Run/Trace。COREへのID照会なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A02",
+      "category": "harness_contract",
+      "title": "policyとcaller",
+      "functions": [
+        "F01",
+        "F16",
+        "F30"
+      ],
+      "requirements": [
+        "RH-002"
+      ],
+      "condition": "許可外workspace/Tool/実行modeを要求",
+      "expected": "副作用0、FORBIDDENまたはPOLICY_REJECTED。CLI/Coreで同じ判定",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A03",
+      "category": "harness_contract",
+      "title": "五区分Prompt",
+      "functions": [
+        "F04",
+        "F26"
+      ],
+      "requirements": [
+        "RH-018"
+      ],
+      "condition": "Shiro由来の四block＋input、通常Tool継続を投入",
+      "expected": "各区分・本文・順序を保持。flattenしたSystemPromptから由来を捏造しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A04",
+      "category": "harness_contract",
+      "title": "Budget四状態",
+      "functions": [
+        "F05",
+        "F24"
+      ],
+      "requirements": [
+        "RH-020",
+        "RH-021"
+      ],
+      "condition": "exact/bound/estimated/unverifiedを注入",
+      "expected": "境界を跨ぐboundはexact再計数またはBudgetUnverified。manual/Emergencyでも迂回しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A05",
+      "category": "harness_contract",
+      "title": "由来と指示保持",
+      "functions": [
+        "F03",
+        "F08"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-004"
+      ],
+      "condition": "AutomationでHumanを失効させる候補",
+      "expected": "拒否しHuman原文は不変。正当なHuman後続撤回だけ失効可",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A06",
+      "category": "harness_contract",
+      "title": "CASと遅着",
+      "functions": [
+        "F13",
+        "F14",
+        "F23"
+      ],
+      "requirements": [
+        "RH-009"
+      ],
+      "condition": "生成中のcontrol変更/履歴変更/通常queue追加",
+      "expected": "control/履歴変更で古い候補拒否、pending queueだけなら誤staleなし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A07",
+      "category": "harness_contract",
+      "title": "commit応答消失",
+      "functions": [
+        "F14",
+        "F17",
+        "F28"
+      ],
+      "requirements": [
+        "RH-009",
+        "RH-010"
+      ],
+      "condition": "commit前後に接続を切り、同keyで再照会",
+      "expected": "同receiptを返し二重checkpointなし。成否不明ならrestart_required",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A08",
+      "category": "harness_contract",
+      "title": "stream終端",
+      "functions": [
+        "F15",
+        "F21"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-011"
+      ],
+      "condition": "length/EOF/二重終端/途中Tool引数",
+      "expected": "Toolを一件も実行せずtyped失敗。provisionalをfinalにしない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A09",
+      "category": "harness_contract",
+      "title": "Action冪等",
+      "functions": [
+        "F16",
+        "F22"
+      ],
+      "requirements": [
+        "RH-001",
+        "RH-010"
+      ],
+      "condition": "同Model response/toolを再配信",
+      "expected": "同Actionを返す。同key異argsはconflict。Actionless経路なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A10",
+      "category": "harness_contract",
+      "title": "Tool結果不明",
+      "functions": [
+        "F16",
+        "F17",
+        "F29"
+      ],
+      "requirements": [
+        "RH-010"
+      ],
+      "condition": "副作用後・結果保存前にkill",
+      "expected": "照会不能ならEFFECT_OUTCOME_UNKNOWN。Tool再実行0",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A11",
+      "category": "harness_contract",
+      "title": "cold resume",
+      "functions": [
+        "F02",
+        "F17",
+        "F22"
+      ],
+      "requirements": [
+        "RH-019"
+      ],
+      "condition": "有効checkpointからprocessを再起動",
+      "expected": "原文/参照が同一、新Run/Trace、旧Runの改名なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A12",
+      "category": "harness_contract",
+      "title": "cancel線形化",
+      "functions": [
+        "F16",
+        "F23",
+        "F29"
+      ],
+      "requirements": [
+        "RH-009",
+        "RH-010"
+      ],
+      "condition": "dispatch-startの前後でcancelを競合",
+      "expected": "前ならdispatch0、後なら開始済みとして停止/照会、取消済み偽装なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A13",
+      "category": "harness_contract",
+      "title": "Evidence範囲",
+      "functions": [
+        "F11",
+        "F18"
+      ],
+      "requirements": [
+        "RH-006",
+        "RH-007"
+      ],
+      "condition": "UTF-8境界違反/大range/改ざん/別principal",
+      "expected": "INVALID_RANGE/Forbidden/Integrityを区別。許可rangeだけ返す",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A14",
+      "category": "harness_contract",
+      "title": "未完了終端",
+      "functions": [
+        "F19",
+        "F20"
+      ],
+      "requirements": [
+        "RH-011"
+      ],
+      "condition": "step/deadline上限に達する",
+      "expected": "incomplete、保存済み進捗、resumable根拠。nil errorだけで完了扱いしない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A15",
+      "category": "harness_contract",
+      "title": "Task達成分離",
+      "functions": [
+        "F10",
+        "F20",
+        "F26"
+      ],
+      "requirements": [
+        "RH-008"
+      ],
+      "condition": "最終本文と未実施/失敗の検査Evidence",
+      "expected": "Run終了とverificationを別表示。COREは証拠なしに親Task成功へしない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A16",
+      "category": "harness_contract",
+      "title": "三OS配布",
+      "functions": [
+        "F21",
+        "F28",
+        "F29",
+        "F30"
+      ],
+      "requirements": [
+        "RH-017",
+        "RH-022"
+      ],
+      "condition": "Ubuntu/Windows/macOS native artifact",
+      "expected": "CORE/Python/Nodeの必須起動なし。同じAPI/エラー/保存意味。GPU optionalとは分離",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A17",
+      "category": "harness_contract",
+      "title": "単一driver",
+      "functions": [
+        "F02",
+        "F14",
+        "F16",
+        "F22"
+      ],
+      "requirements": [
+        "RH-001",
+        "RH-009"
+      ],
+      "condition": "同Thread/workspaceへ2process、遅着旧fence",
+      "expected": "二重driver/変更を拒否。OS lock不取得時にTTLだけで乗取りしない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A18",
+      "category": "harness_contract",
+      "title": "private診断",
+      "functions": [
+        "F15",
+        "F18",
+        "F21",
+        "F28"
+      ],
+      "requirements": [
+        "RH-016"
+      ],
+      "condition": "secret/raw本文を含む失敗入力",
+      "expected": "publicログに本文/keyなし。private Evidenceへ権限付きで保存",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A19",
+      "category": "harness_contract",
+      "title": "CORE停止中CLI",
+      "functions": [
+        "F21",
+        "F22",
+        "F24",
+        "F28",
+        "F30"
+      ],
+      "requirements": [
+        "RH-017"
+      ],
+      "condition": "CORE未起動・CORE DB未配置でcoding",
+      "expected": "CLIで読取/編集/実テスト/保存/圧縮/resumeが成立。CORE process起動0",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A20",
+      "category": "harness_contract",
+      "title": "二入口同一Kernel",
+      "functions": [
+        "F21",
+        "F22",
+        "F26"
+      ],
+      "requirements": [
+        "RH-018"
+      ],
+      "condition": "同じsynthetic課題をCLIとCOREで実行",
+      "expected": "同じServiceとKernel、同じ権限・終端・Compaction・保存契約",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A21",
+      "category": "harness_contract",
+      "title": "全API型",
+      "functions": [
+        "F01",
+        "F21"
+      ],
+      "requirements": [
+        "RH-018",
+        "RH-021"
+      ],
+      "condition": "全methodの正例/未知field/誤type/unsupported version",
+      "expected": "16 methodすべて厳密型で受理/拒否。Compact/Resume型の未定義なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A22",
+      "category": "harness_contract",
+      "title": "Summary handle体系",
+      "functions": [
+        "F07",
+        "F09",
+        "F10"
+      ],
+      "requirements": [
+        "RH-006",
+        "RH-008"
+      ],
+      "condition": "5namespaceと未提示/欠番/他stage handle",
+      "expected": "配列順とSourceRefを一致。無効handle拒否。前回summaryは最大1",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A23",
+      "category": "harness_contract",
+      "title": "代替なし撤回",
+      "functions": [
+        "F03",
+        "F07",
+        "F08"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-004"
+      ],
+      "condition": "Aを実装→Aはやめて、Bなし",
+      "expected": "revocationを有効な根拠として扱い、Aだけ失効、撤回文は保持",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A24",
+      "category": "harness_contract",
+      "title": "Preflight最小no-fit",
+      "functions": [
+        "F05",
+        "F12",
+        "F19"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-011"
+      ],
+      "condition": "verified最低候補が上限を超過",
+      "expected": "CapacityBlocked直行、Summary生成0、Emergency呼出し0。Selection既実行回数と区別",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A25",
+      "category": "harness_contract",
+      "title": "最終template計数",
+      "functions": [
+        "F05",
+        "F24"
+      ],
+      "requirements": [
+        "RH-020",
+        "RH-021"
+      ],
+      "condition": "tools/role/bos等を含む実Backend prompt",
+      "expected": "measureと実prompt usageの定義を一致。declared値を実測へ昇格しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A26",
+      "category": "harness_contract",
+      "title": "Chatのno-tools保護",
+      "functions": [
+        "F09",
+        "F10",
+        "F15",
+        "F24"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-013"
+      ],
+      "condition": "実Chat strict経路へraw tool markup/reasoning-only",
+      "expected": "schema不合格をcommitしない。hidden retry/no-thinking変更0、receiptあり",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A27",
+      "category": "harness_contract",
+      "title": "RPC上限",
+      "functions": [
+        "F01",
+        "F21"
+      ],
+      "requirements": [
+        "RH-016"
+      ],
+      "condition": "oversize/depth/重複key/batch/不正UTF-8",
+      "expected": "parseで拒否。生成/Tool/保存mutationなし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A28",
+      "category": "harness_contract",
+      "title": "immutable store",
+      "functions": [
+        "F02",
+        "F14",
+        "F28"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-015"
+      ],
+      "condition": "sealed raw、checkpoint、eventをUPDATE/DELETE",
+      "expected": "DB制約とdomain validatorが拒否。CURRENT pointerを単独変更しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A29",
+      "category": "harness_contract",
+      "title": "binding変更",
+      "functions": [
+        "F05",
+        "F15",
+        "F24"
+      ],
+      "requirements": [
+        "RH-012",
+        "RH-020"
+      ],
+      "condition": "measure後にtemplate/Model/profile変更",
+      "expected": "BINDING_CHANGED、古いcountで生成0。再measure有限、別Model fallbackなし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A30",
+      "category": "harness_contract",
+      "title": "追加入力3分類",
+      "functions": [
+        "F03",
+        "F23"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-009"
+      ],
+      "condition": "next_step/interrupt_current/next_turnを各競合点で受付",
+      "expected": "queue/control/applicationを区別、入力を一回だけ適用、停止要求をordinary queueに埋めない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A31",
+      "category": "harness_contract",
+      "title": "CORE旧経路遮断",
+      "functions": [
+        "F16",
+        "F26"
+      ],
+      "requirements": [
+        "RH-001",
+        "RH-018"
+      ],
+      "condition": "Shiro keywordとnested subagentを含む委譲",
+      "expected": "新profileはnative clientへ到達し、旧Codex/toolloop/Actionless経路へ戻らない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A32",
+      "category": "harness_contract",
+      "title": "backup後の副作用",
+      "functions": [
+        "F17",
+        "F28",
+        "F29"
+      ],
+      "requirements": [
+        "RH-010",
+        "RH-015"
+      ],
+      "condition": "backup後にfile変更してからDB restore",
+      "expected": "変更をDB復元で取り消したと見なさず、照会根拠なしに再実行しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A33",
+      "category": "harness_contract",
+      "title": "AGENTS/Skills",
+      "functions": [
+        "F03",
+        "F04",
+        "F27"
+      ],
+      "requirements": [
+        "RH-002",
+        "RH-003"
+      ],
+      "condition": "untrusted path、prompt内権限上書き、巨大skill",
+      "expected": "scope/信頼/sizeで拒否またはdata扱い。権限/Humanへの昇格なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A34",
+      "category": "harness_contract",
+      "title": "exact edit境界",
+      "functions": [
+        "F16",
+        "F29",
+        "F30"
+      ],
+      "requirements": [
+        "RH-002",
+        "RH-010"
+      ],
+      "condition": "hash不一致/非一意match/symlink/reparse/case差",
+      "expected": "曖昧編集0。三OSのcontainment差を検査。外部writer完全CASは広告しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A35",
+      "category": "harness_contract",
+      "title": "sandbox正直性",
+      "functions": [
+        "F16",
+        "F30"
+      ],
+      "requirements": [
+        "RH-022"
+      ],
+      "condition": "isolated未配置で実行、trusted_hostを選択",
+      "expected": "isolatedはunavailable、hostへの暗黙降格0。hostはOS隔離なしと表示",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A36",
+      "category": "harness_contract",
+      "title": "Session fork",
+      "functions": [
+        "F02",
+        "F18",
+        "F25"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-006"
+      ],
+      "condition": "有効checkpoint、active Tool、別ACL、file状態差",
+      "expected": "安全な履歴forkのみ、active効果copyなし、filesystem復元を偽装しない",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A37",
+      "category": "harness_contract",
+      "title": "Switch移行",
+      "functions": [
+        "F02",
+        "F17",
+        "F28"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-015"
+      ],
+      "condition": "停止した旧threadのexport/absolute path/origin/opaque",
+      "expected": "旧原本不変、コピー先隔離、未対応形式fail closed。新runtimeへ旧parser常駐なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P7_when_requested"
+    },
+    {
+      "test_id": "A38",
+      "category": "harness_contract",
+      "title": "遅いclient",
+      "functions": [
+        "F20",
+        "F21",
+        "F23"
+      ],
+      "requirements": [
+        "RH-011",
+        "RH-018"
+      ],
+      "condition": "outbound queue飽和中にcancel/最終結果",
+      "expected": "制御優先、progress gapを明示、確定Eventは再取得可。二重実行なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A39",
+      "category": "harness_contract",
+      "title": "partial capture",
+      "functions": [
+        "F07",
+        "F11",
+        "F16",
+        "F18"
+      ],
+      "requirements": [
+        "RH-006",
+        "RH-007"
+      ],
+      "condition": "出力上限/途中killでraw捕捉が欠落",
+      "expected": "capture_complete=false、全文completion linkなし、metrics0補完なし",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A40",
+      "category": "harness_contract",
+      "title": "製品完了境界",
+      "functions": [
+        "F20",
+        "F21",
+        "F24",
+        "F26",
+        "F30"
+      ],
+      "requirements": [
+        "RH-017",
+        "RH-018",
+        "RH-021"
+      ],
+      "condition": "CLIのみ/COREのみ/計数なしの実装を判定",
+      "expected": "P6不合格。両入口と初回binding計数/Compaction/resumeの証拠が必須",
+      "owner": "Harness / dependent owner as applicable",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P3",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A41",
+      "category": "harness_contract",
+      "title": "actの有限retryとID",
+      "functions": [
+        "F15",
+        "F31",
+        "F19"
+      ],
+      "requirements": [
+        "RH-023",
+        "RH-011"
+      ],
+      "condition": "初回actがreasoning-only、2回目成功/失敗の両方",
+      "expected": "同Action、新Attempt/Request、最大2回。3回目なし。失敗本文はContextへ入らない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A42",
+      "category": "harness_contract",
+      "title": "明示回復と再measure",
+      "functions": [
+        "F15",
+        "F24",
+        "F31",
+        "F30"
+      ],
+      "requirements": [
+        "RH-012",
+        "RH-020",
+        "RH-023"
+      ],
+      "condition": "terminal_output_once許可/不許可、対応/非対応、Qwenの形式補正",
+      "expected": "許可された変換のみ、新digestを計数し、同物理Modelを維持。適用内容receiptが一致",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A43",
+      "category": "harness_contract",
+      "title": "取消・未知生成のretry抑止",
+      "functions": [
+        "F19",
+        "F23",
+        "F31"
+      ],
+      "requirements": [
+        "RH-009",
+        "RH-010",
+        "RH-023"
+      ],
+      "condition": "backoff中cancel/revoke/unknown、別binding、refusal",
+      "expected": "新生成なし、typed結果。Unknownを未開始と見なさない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A44",
+      "category": "harness_contract",
+      "title": "stepと試行予算",
+      "functions": [
+        "F22",
+        "F31",
+        "F35"
+      ],
+      "requirements": [
+        "RH-023",
+        "RH-025"
+      ],
+      "condition": "Step10、generation capの境界、retry待ちがdeadlineを超過",
+      "expected": "各生成予約を計上。retryはStepを増やさず試行枠を消費。cap枯渇を新Actionで回避しない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A45",
+      "category": "harness_contract",
+      "title": "Compactionへretryを流用しない",
+      "functions": [
+        "F09",
+        "F10",
+        "F12",
+        "F31"
+      ],
+      "requirements": [
+        "RH-013",
+        "RH-023"
+      ],
+      "condition": "Selection/Summaryが空/不正出力。act回復profileが設定済み",
+      "expected": "Selection最大1+Summary最大1。失敗時追加生成0のEmergency、Preflight no-fitは直接Blocked",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A46",
+      "category": "harness_contract",
+      "title": "Context revision producer",
+      "functions": [
+        "F04",
+        "F26",
+        "F32"
+      ],
+      "requirements": [
+        "RH-024",
+        "RH-004"
+      ],
+      "condition": "同本文/改行差/Unicode差/source差、CORE五区分・flatten経路",
+      "expected": "決定的revision、内部digest別、SourceRef hashと引用hashを混同しない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A47",
+      "category": "harness_contract",
+      "title": "Resumeの明示limits",
+      "functions": [
+        "F17",
+        "F22",
+        "F35"
+      ],
+      "requirements": [
+        "RH-019",
+        "RH-025"
+      ],
+      "condition": "limits省略/過大/新deadline、同key異limits、新Run生成",
+      "expected": "省略と過大を拒否。新予算をreceipt返却、旧Run実績保持、再送で二重Runなし",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A48",
+      "category": "harness_contract",
+      "title": "CORE Human relay署名",
+      "functions": [
+        "F03",
+        "F33",
+        "F34"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-024"
+      ],
+      "condition": "valid/tampered/different audience/thread/key/expired/replayed proof",
+      "expected": "raw照合、定時間MAC検査、nonce一意。同key確定receiptは期限後も再取得可",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A49",
+      "category": "harness_contract",
+      "title": "CLIもintake receipt",
+      "functions": [
+        "F03",
+        "F04",
+        "F22",
+        "F34"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-024"
+      ],
+      "condition": "対話/exec human明示/pipe/script、payload human claim、user_message混入",
+      "expected": "全入力がimmutable receipt。pipeを設定だけでHumanにしない。StartInput user blockを拒否",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A50",
+      "category": "harness_contract",
+      "title": "初回Qwenの非生成計数",
+      "functions": [
+        "F05",
+        "F24",
+        "F30"
+      ],
+      "requirements": [
+        "RH-020",
+        "RH-021"
+      ],
+      "condition": "既存full-chat measure APIか同一engine前処理、cold/hot/日本語/Tool/recovery",
+      "expected": "非生成で同template/特殊tokenまで一致。別手書きtemplate・経験比率をexactにしない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A51",
+      "category": "harness_contract",
+      "title": "Completion各2048bytes",
+      "functions": [
+        "F07",
+        "F12"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-007"
+      ],
+      "condition": "call=2048/output=2048と片方2049、日本語UTF8、partial",
+      "expected": "両2048はサイズ条件を通る。片方2049は拒否。合計2048へ誤制限しない。意味完了は別検査",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A52",
+      "category": "harness_contract",
+      "title": "一要求一生成とunknown記録",
+      "functions": [
+        "F15",
+        "F17",
+        "F19",
+        "F31"
+      ],
+      "requirements": [
+        "RH-010",
+        "RH-014",
+        "RH-023"
+      ],
+      "condition": "strict receiptのbackend_attempts 0/1/null/2、通信結果不明",
+      "expected": "2を契約違反拒否。0/1/nullとgeneration_state整合。unknownを0へしない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A53",
+      "category": "harness_contract",
+      "title": "CORE供給から実入口まで",
+      "functions": [
+        "F26",
+        "F32",
+        "F33",
+        "F34"
+      ],
+      "requirements": [
+        "RH-017",
+        "RH-018",
+        "RH-024"
+      ],
+      "condition": "実CORE五区分/revision/原文relay/子Taskとstandalone同課題",
+      "expected": "producerとconsumerの両側を実装、旧Codex/Actionlessへ戻らず、CORE停止中もCLI成立",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A54",
+      "category": "harness_contract",
+      "title": "参照pinと配備pin",
+      "functions": [
+        "F30",
+        "F36"
+      ],
+      "requirements": [
+        "RH-026",
+        "RH-021"
+      ],
+      "condition": "Switch参照9331c99bとEcoSystem16ea1009、実機source未確認",
+      "expected": "別recordに固定。参考を最新配備と偽装せず、旧Switchを自動更新しない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P0",
+        "P1"
+      ],
+      "evidence_required": [
+        "fixture revision/hash",
+        "source/build/config/OS/binding revisions",
+        "actual response/status",
+        "Run/Action/Receipt/Evidence references",
+        "unexecuted conditions explicitly reported"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A55",
+      "category": "harness_contract",
+      "title": "共有入力digest",
+      "functions": [
+        "F15",
+        "F24",
+        "F37"
+      ],
+      "requirements": [
+        "RH-018",
+        "RH-020"
+      ],
+      "condition": "metadata key/数値表現/null/回復profileを変更",
+      "expected": "宣言field集合だけCJ1+LP、expected echoと二重正規化なし",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A56",
+      "category": "harness_contract",
+      "title": "opaque binding",
+      "functions": [
+        "F24",
+        "F37"
+      ],
+      "requirements": [
+        "RH-012",
+        "RH-020"
+      ],
+      "condition": "weights/template/profile/limit変更と同一profile再読",
+      "expected": "変化時拒否、同条件で安定、client再構成なし",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A57",
+      "category": "harness_contract",
+      "title": "エラー正規化",
+      "functions": [
+        "F19",
+        "F31"
+      ],
+      "requirements": [
+        "RH-010",
+        "RH-011"
+      ],
+      "condition": "旧codeとstrict code、停止証拠あり/なし",
+      "expected": "first-output unknownとDEGENERATE no retryを区別",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A58",
+      "category": "harness_contract",
+      "title": "mutation canonical hash",
+      "functions": [
+        "F01",
+        "F21",
+        "F34",
+        "F37"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-018"
+      ],
+      "condition": "同RPC keyでmethod/proof/limits/null/順序変更",
+      "expected": "同義のwire順は同hash、意味変更はconflict",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A59",
+      "category": "harness_contract",
+      "title": "roleとprefix写像",
+      "functions": [
+        "F04",
+        "F15",
+        "F37"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-018"
+      ],
+      "condition": "五区分、空白/改行、single_leading、Tool対",
+      "expected": "原文をtrimせずprefixだけcoalesce、後続instruction拒否",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A60",
+      "category": "harness_contract",
+      "title": "圧縮後act投影",
+      "functions": [
+        "F02",
+        "F04",
+        "F13",
+        "F18",
+        "F37"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-006",
+        "RH-007"
+      ],
+      "condition": "checkpoint reload→次act、旧Summary+retained+tail+ref",
+      "expected": "同golden、obsoleteなし、refでEvidence取得可能",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A61",
+      "category": "harness_contract",
+      "title": "stage data形と分割",
+      "functions": [
+        "F07",
+        "F09",
+        "F37"
+      ],
+      "requirements": [
+        "RH-004",
+        "RH-013"
+      ],
+      "condition": "5namespace、8000byte+日本語境界、2KiB excerpt",
+      "expected": "schemaとbyte条件、再連結で原文、段要求数不変",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A62",
+      "category": "harness_contract",
+      "title": "Emergency縮約単位",
+      "functions": [
+        "F11",
+        "F12",
+        "F13"
+      ],
+      "requirements": [
+        "RH-005",
+        "RH-020"
+      ],
+      "condition": "古いexcerpt/full、marker長さ、bytes減token増",
+      "expected": "一定順で全適格置換、全体verified tokenで採否",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P4"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A63",
+      "category": "harness_contract",
+      "title": "Host Policy registry",
+      "functions": [
+        "F16",
+        "F27",
+        "F39"
+      ],
+      "requirements": [
+        "RH-002",
+        "RH-022"
+      ],
+      "condition": "未登録/曖昧profile、scope escape、env継承",
+      "expected": "closed registry、scope/limit交差、fail closed",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A64",
+      "category": "harness_contract",
+      "title": "拡張資産契約",
+      "functions": [
+        "F18",
+        "F29",
+        "F39"
+      ],
+      "requirements": [
+        "RH-002",
+        "RH-016"
+      ],
+      "condition": "AGENTS祖先/trust/size、SKILL YAMLとhook",
+      "expected": "限定探索、bodyはEvidence load、hookで権限昇格なし",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A65",
+      "category": "harness_contract",
+      "title": "candidate byte形式",
+      "functions": [
+        "F02",
+        "F13",
+        "F14",
+        "F37"
+      ],
+      "requirements": [
+        "RH-009",
+        "RH-015"
+      ],
+      "condition": "prefix/CJ/float/metadata/count/DB revisionを改変",
+      "expected": "正確なBLOB/hash、採用前後revisionを区別、拒否境界",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P4"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A66",
+      "category": "harness_contract",
+      "title": "Event payload15種",
+      "functions": [
+        "F23",
+        "F38"
+      ],
+      "requirements": [
+        "RH-011",
+        "RH-016"
+      ],
+      "condition": "各type positive/unknown field/DB再取得",
+      "expected": "Event.payloadとpayload_json一致、raw公開なし",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A67",
+      "category": "harness_contract",
+      "title": "鍵principal caller digest",
+      "functions": [
+        "F03",
+        "F33",
+        "F34",
+        "F37",
+        "F39"
+      ],
+      "requirements": [
+        "RH-003",
+        "RH-016"
+      ],
+      "condition": "hex/CRLF/base64/別principal/ACL順変更",
+      "expected": "唯一形式、profile集合順の正規化、鍵情報をhashへ入れない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P2",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A68",
+      "category": "harness_contract",
+      "title": "moduleとmanifest",
+      "functions": [
+        "F30",
+        "F36"
+      ],
+      "requirements": [
+        "RH-017",
+        "RH-026"
+      ],
+      "condition": "import main path、template commit未置換",
+      "expected": "正しいmodule/binary、未知pinの配備拒否",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P0",
+        "P1"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A69",
+      "category": "harness_contract",
+      "title": "Shiro対象入口",
+      "functions": [
+        "F26",
+        "F30"
+      ],
+      "requirements": [
+        "RH-001",
+        "RH-017",
+        "RH-018"
+      ],
+      "condition": "旧keyword一致/不一致、Subagent有/無、native失敗",
+      "expected": "選択profileは全旧分岐を迂回、非対象は維持",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P1",
+        "P5"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A70",
+      "category": "harness_contract",
+      "title": "act stream終端",
+      "functions": [
+        "F15",
+        "F16",
+        "F31",
+        "F40"
+      ],
+      "requirements": [
+        "RH-008",
+        "RH-010",
+        "RH-011"
+      ],
+      "condition": "args分割、id/index違反、terminal/DONE欠落",
+      "expected": "終端前Tool0、unknown/length/refusedを分離",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P2",
+        "P3"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    },
+    {
+      "test_id": "A71",
+      "category": "harness_contract",
+      "title": "measure呼出し回数",
+      "functions": [
+        "F05",
+        "F15",
+        "F24",
+        "F31"
+      ],
+      "requirements": [
+        "RH-020",
+        "RH-024"
+      ],
+      "condition": "初回+retry、同操作候補再検査",
+      "expected": "各Attempt計数+生成、計数が生成/KVを起こさない",
+      "owner": "Claude (module ownership follows WORK_ORDER)",
+      "status": "not_run",
+      "execution_evidence": [],
+      "phases": [
+        "P3"
+      ],
+      "evidence_required": [
+        "fixed fixture bytes/hash",
+        "independent Go implementation results",
+        "source/build/config/OS/LLM revisions",
+        "actual result and preserved failures"
+      ],
+      "required_for": "P6B"
+    }
+  ],
+  "document_version": "0.2.2",
+  "runtime_tests_executed": false
+}

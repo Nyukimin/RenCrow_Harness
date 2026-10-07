@@ -1,0 +1,19 @@
+{
+  "run_id": "run_00000000-0000-7000-8000-000000000001",
+  "task_id": "tsk_00000000-0000-7000-8000-000000000001",
+  "status": "incomplete",
+  "code": "STEP_BUDGET_EXHAUSTED",
+  "final_message_id": "msg_00000000-0000-7000-8000-000000000002",
+  "final_text": "変更は保存済み。実機の再開試験は未実施。",
+  "verification": {
+    "status": "not_run",
+    "evidence_ids": [],
+    "criteria_revision": "fixture-1"
+  },
+  "evidence_ids": [
+    "evd_00000000-0000-7000-8000-000000000001"
+  ],
+  "unresolved_action_ids": [],
+  "last_checkpoint_id": "ckp_00000000-0000-7000-8000-000000000001",
+  "resumable": true
+}

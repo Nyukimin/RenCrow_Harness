@@ -1,0 +1,89 @@
+{
+  "format_version": "rencrow-summary-data/v1",
+  "work": [
+    {
+      "handle": "work-0",
+      "origin": "agent",
+      "sequence": 2,
+      "chunk_index": 0,
+      "chunk_count": 1,
+      "text": "保存処理を実装中。",
+      "continuing_constraint": false
+    }
+  ],
+  "observations": [
+    {
+      "handle": "observation-0",
+      "tool": "process.exec",
+      "sequence": 4,
+      "total_bytes": 5,
+      "partial": false,
+      "capture_complete": true,
+      "excerpts": [
+        {
+          "range": {
+            "start": 0,
+            "end": 5
+          },
+          "text": "test!"
+        }
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "handle": "instruction-0",
+      "origin": "human",
+      "sequence": 1,
+      "chunk_index": 0,
+      "chunk_count": 1,
+      "text": "ログは削除しない。\n",
+      "continuing_constraint": false
+    }
+  ],
+  "prior_summaries": [
+    {
+      "handle": "summary-0",
+      "summary": {
+        "current_work": [
+          {
+            "text": "保存処理を実装中。"
+          }
+        ],
+        "decisions": [],
+        "verification": [
+          {
+            "text": "再開試験は未実施。",
+            "state": "not_run"
+          }
+        ],
+        "open_items": [
+          {
+            "text": "再開試験"
+          }
+        ],
+        "next_steps": []
+      }
+    }
+  ],
+  "completions": [
+    {
+      "handle": "completion-0",
+      "instruction_handles": [
+        "instruction-0"
+      ],
+      "call_text": "test",
+      "output_text": "ok",
+      "exit_code": 0
+    }
+  ],
+  "protected_state": [
+    {
+      "kind": "mixed_media",
+      "description": "Image kept outside text-only summary",
+      "text": null,
+      "total_bytes": 1024,
+      "partial": true
+    }
+  ]
+}

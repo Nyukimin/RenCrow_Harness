@@ -1,0 +1,24 @@
+{
+  "skill": {
+    "name": "fixture-review",
+    "description": "Read supplied source and report findings.",
+    "metadata": {
+      "source": "fixture"
+    }
+  },
+  "hook_input": {
+    "hook": "before_tool",
+    "thread_id": "thr_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0001",
+    "run_id": "run_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0001",
+    "action_id": "act_018f1c2d-3e4f-7a5b-8c6d-7e8f9a0b0001",
+    "stage": "act",
+    "context_revision": 1,
+    "control_revision": 0,
+    "evidence_ids": [],
+    "code": null
+  },
+  "hook_result": {
+    "decision": "continue",
+    "code": null
+  }
+}

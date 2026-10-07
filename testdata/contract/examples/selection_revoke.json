@@ -1,0 +1,12 @@
+{
+  "operations": [
+    {
+      "operation": "drop_superseded",
+      "basis": "revocation",
+      "target_handle": "presented-0",
+      "target_quote": "方式Aを実装する。",
+      "replacement_handle": "presented-1",
+      "replacement_quote": "方式Aはやめる。"
+    }
+  ]
+}
