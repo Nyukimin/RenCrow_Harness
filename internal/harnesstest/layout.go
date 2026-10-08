@@ -9,6 +9,8 @@ package harnesstest
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"testing"
@@ -72,6 +74,24 @@ func example(t testing.TB, name string) map[string]any {
 	return m
 }
 
+// ClosedLoopbackBaseURL returns a Gateway base URL (http://127.0.0.1:<port>/v1) whose port
+// nothing listens on: the port is taken from the system and released again before the URL
+// is returned. It is what a Gateway that is down looks like, and unlike a fixed port (the
+// example configuration names the one a real Gateway serves on) it cannot reach a Gateway
+// that happens to run on the host the tests run on.
+func ClosedLoopbackBaseURL(t testing.TB) string {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := ln.Addr().(*net.TCPAddr).Port
+	if err := ln.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return fmt.Sprintf("http://127.0.0.1:%d/v1", port)
+}
+
 func mkdir(t testing.TB, path string, mode os.FileMode) {
 	t.Helper()
 	if err := os.MkdirAll(path, mode); err != nil {
@@ -106,6 +126,9 @@ func NewLayout(t testing.TB, opts Options) *Layout {
 	l.Cfg = example(t, "config.json")
 	l.Reg = example(t, "policies.json")
 	l.Cfg["data_root"] = l.Data
+	// The Gateway is down unless a test starts a double and names it: never the address of
+	// the example configuration, which a real Gateway on this host would answer.
+	l.Cfg["gateway"].(map[string]any)["base_url"] = ClosedLoopbackBaseURL(t)
 	l.Cfg["storage"].(map[string]any)["backup_root"] = l.Backup
 	l.Cfg["workspaces"].([]any)[0].(map[string]any)["root"] = l.Work
 	l.Cfg["policy_registry_path"] = l.Registry
