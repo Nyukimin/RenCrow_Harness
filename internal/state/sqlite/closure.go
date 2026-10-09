@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"net/url"
 	"sort"
 	"strings"
 
@@ -457,8 +456,7 @@ func (s *Store) VerifyClosure(ctx context.Context) (ClosureReport, error) {
 // VerifyBackupFile checks a database file at rest, without touching it: it is
 // opened read-only and immutable, so no journal or WAL file is created beside it.
 func VerifyBackupFile(ctx context.Context, path string) (ClosureReport, error) {
-	u := url.URL{Scheme: "file", Path: path, RawQuery: "mode=ro&immutable=1&_pragma=foreign_keys(1)"}
-	db, err := openDB(u.String())
+	db, err := openDB(sqliteFileURI(path, "mode=ro&immutable=1&_pragma=foreign_keys(1)"))
 	if err != nil {
 		return ClosureReport{}, fmt.Errorf("sqlite: %w", err)
 	}

@@ -212,11 +212,11 @@ func TestAcquireRefusesAMalformedThreadIDBeforeTouchingTheFilesystem(t *testing.
 
 func TestNewWritersRefusesALocksDirectoryThatIsNotPrivate(t *testing.T) {
 	r := newRig(t)
+	s := r.open() // the data root itself is still private
 	dir := filepath.Join(r.root, "locks")
 	if err := os.Chmod(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	s := r.open() // the data root itself is still private
 	if _, err := session.NewWriters(s); !errors.Is(err, fsperm.ErrNotOwnerOnly) {
 		t.Fatalf("%v", err)
 	}

@@ -37,6 +37,9 @@ type BackupReceipt struct {
 // through the restore-closure check; a backup that fails it is removed and
 // reported, never kept as a recovery point.
 func (s *Store) Backup(ctx context.Context, backupRoot string) (BackupReceipt, error) {
+	if err := fsperm.CheckProcessOwner(); err != nil {
+		return BackupReceipt{}, fmt.Errorf("sqlite: process owner: %w", err)
+	}
 	if backupRoot == "" || !filepath.IsAbs(backupRoot) || filepath.Clean(backupRoot) != backupRoot || strings.ContainsRune(backupRoot, 0) {
 		return BackupReceipt{}, errors.New("sqlite: backup root must be an explicit absolute path")
 	}
@@ -50,7 +53,11 @@ func (s *Store) Backup(ctx context.Context, backupRoot string) (BackupReceipt, e
 	if fsperm.Overlaps(ahead, s.root) {
 		return BackupReceipt{}, ErrBackupLocation
 	}
-	if err := os.MkdirAll(backupRoot, 0o700); err != nil {
+	if _, err := os.Lstat(backupRoot); errors.Is(err, os.ErrNotExist) {
+		if err := createPrivateDirAll(backupRoot); err != nil {
+			return BackupReceipt{}, fmt.Errorf("sqlite: backup root: %w", fsperm.WithoutPath(err))
+		}
+	} else if err != nil {
 		return BackupReceipt{}, fmt.Errorf("sqlite: backup root: %w", fsperm.WithoutPath(err))
 	}
 	real, err := filepath.EvalSymlinks(backupRoot)
@@ -60,7 +67,7 @@ func (s *Store) Backup(ctx context.Context, backupRoot string) (BackupReceipt, e
 	if fsperm.Overlaps(real, s.root) {
 		return BackupReceipt{}, ErrBackupLocation
 	}
-	if err := fsperm.CheckOwnerOnlyDir(real); err != nil {
+	if err := fsperm.CheckOwnerOnlyDirForChildren(real); err != nil {
 		return BackupReceipt{}, fmt.Errorf("sqlite: backup root: %w", err)
 	}
 
@@ -73,12 +80,17 @@ func (s *Store) Backup(ctx context.Context, backupRoot string) (BackupReceipt, e
 	target := filepath.Join(real, name)
 
 	// VACUUM INTO accepts a target only if it is empty or missing. Creating it first
-	// with O_EXCL and mode 0600 means the backup is never visible with wider rights.
-	f, err := os.OpenFile(target, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	// with the private creator means it is never visible with wider rights.
+	f, err := fsperm.CreatePrivateFile(target)
 	if err != nil {
 		return BackupReceipt{}, fmt.Errorf("sqlite: backup target: %w", fsperm.WithoutPath(err))
 	}
-	_ = f.Close()
+	if err := f.Close(); err != nil {
+		return BackupReceipt{}, fmt.Errorf("sqlite: backup target: %w", fsperm.WithoutPath(err))
+	}
+	if err := fsperm.CheckOwnerOnlyFile(target); err != nil {
+		return BackupReceipt{}, fmt.Errorf("sqlite: backup target: %w", fsperm.WithoutPath(err))
+	}
 	keep := false
 	defer func() {
 		if !keep {
@@ -86,8 +98,17 @@ func (s *Store) Backup(ctx context.Context, backupRoot string) (BackupReceipt, e
 		}
 	}()
 
+	if err := checkSQLiteSidecars(target); err != nil {
+		return BackupReceipt{}, err
+	}
 	if _, err := s.db.ExecContext(ctx, "VACUUM INTO ?", target); err != nil {
 		return BackupReceipt{}, fmt.Errorf("sqlite: backup: %w", mapSQLiteError(err))
+	}
+	if err := fsperm.CheckOwnerOnlyFile(target); err != nil {
+		return BackupReceipt{}, fmt.Errorf("sqlite: backup target: %w", fsperm.WithoutPath(err))
+	}
+	if err := checkSQLiteSidecars(target); err != nil {
+		return BackupReceipt{}, err
 	}
 	if err := makeWAL(ctx, target); err != nil {
 		return BackupReceipt{}, err
@@ -114,6 +135,12 @@ func (s *Store) Backup(ctx context.Context, backupRoot string) (BackupReceipt, e
 // rollback-journal database; Open requires WAL and never converts, so the copy is
 // converted here, once, and checkpointed so it is a single self-contained file.
 func makeWAL(ctx context.Context, path string) error {
+	if err := fsperm.CheckOwnerOnlyFile(path); err != nil {
+		return fmt.Errorf("sqlite: backup target: %w", fsperm.WithoutPath(err))
+	}
+	if err := checkSQLiteSidecars(path); err != nil {
+		return err
+	}
 	db, err := openDB(dsn(path))
 	if err != nil {
 		return fmt.Errorf("sqlite: backup: %w", err)
@@ -129,6 +156,9 @@ func makeWAL(ctx context.Context, path string) error {
 	}
 	if err := db.Close(); err != nil {
 		return fmt.Errorf("sqlite: backup: %w", err)
+	}
+	if err := checkSQLiteSidecars(path); err != nil {
+		return err
 	}
 	for _, suffix := range []string{"-wal", "-shm"} {
 		if st, err := os.Stat(path + suffix); err == nil {

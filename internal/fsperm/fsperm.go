@@ -9,8 +9,7 @@ var (
 	// ErrNotOwnerOnly is wrapped when the path is readable or writable by anyone
 	// but its owner, or is not owned by the current user.
 	ErrNotOwnerOnly = errors.New("fsperm: path is not owner-only")
-	// ErrUnverifiable is wrapped when this operating system has no implemented
-	// check. The caller must treat it as a failure: an unchecked secret location
-	// is not an owner-only one.
+	// ErrUnverifiable is wrapped when the owner-only check is unavailable or
+	// cannot verify the path's owner and access controls. Callers fail closed.
 	ErrUnverifiable = errors.New("fsperm: owner-only access cannot be verified on this OS")
 )

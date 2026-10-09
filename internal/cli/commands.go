@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Nyukimin/RenCrow_Harness/internal/config"
+	"github.com/Nyukimin/RenCrow_Harness/internal/fsperm"
 	"github.com/Nyukimin/RenCrow_Harness/internal/identity"
 	"github.com/Nyukimin/RenCrow_Harness/internal/service"
 	"github.com/Nyukimin/RenCrow_Harness/internal/state/sqlite"
@@ -44,14 +45,16 @@ func cmdInit(ctx context.Context, args []string, out io.Writer) *exitError {
 
 	created := false
 	if _, err := os.Lstat(*dataRoot); errors.Is(err, os.ErrNotExist) {
-		if err := os.Mkdir(*dataRoot, 0o700); err != nil {
-			return usageErr("--data-root cannot be created (its parent must exist)")
+		if err := fsperm.CreatePrivateDir(*dataRoot); err != nil {
+			if !errors.Is(err, os.ErrExist) {
+				return usageErr("--data-root cannot be created (its parent must exist)")
+			}
+			if err := fsperm.CheckOwnerOnlyDir(*dataRoot); err != nil {
+				return failure("the data root is not private")
+			}
+		} else {
+			created = true
 		}
-		if err := os.Chmod(*dataRoot, 0o700); err != nil {
-			_ = os.Remove(*dataRoot)
-			return failure("the data root's permissions cannot be set")
-		}
-		created = true
 	} else if err != nil {
 		return failure("--data-root cannot be examined")
 	}

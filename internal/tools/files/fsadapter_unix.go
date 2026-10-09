@@ -14,6 +14,17 @@ func openNoFollow(path string) (*os.File, error) {
 	return os.OpenFile(path, os.O_RDONLY|syscall.O_NOFOLLOW|syscall.O_NONBLOCK, 0)
 }
 
+func stageCreatePerm(perm os.FileMode, preservePerm bool) os.FileMode {
+	if preservePerm {
+		return 0o600
+	}
+	return perm
+}
+
+func restoreStagePerm(f *os.File, perm os.FileMode) error {
+	return f.Chmod(perm.Perm())
+}
+
 // isReparsePoint is Windows' notion; unix has links, which isLink sees by mode.
 func isReparsePoint(os.FileInfo) bool { return false }
 

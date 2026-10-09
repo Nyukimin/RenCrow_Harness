@@ -56,7 +56,7 @@ func newStore(t testing.TB) (*Store, string) {
 // constraints of the schema, for tests that read or sabotage the database.
 func rawDB(t testing.TB, path string) *sql.DB {
 	t.Helper()
-	db, err := sql.Open("sqlite", (&url.URL{Scheme: "file", Path: path, RawQuery: "_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"}).String())
+	db, err := sql.Open("sqlite", sqliteFileURI(path, "_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,6 +110,59 @@ func TestInitCreatesAPrivateStore(t *testing.T) {
 	for _, e := range entries {
 		if strings.Contains(e.Name(), ".init-") || strings.HasSuffix(e.Name(), "-wal") || strings.HasSuffix(e.Name(), "-shm") {
 			t.Fatalf("initialization left %s behind", e.Name())
+		}
+	}
+}
+
+func TestInitCreatesPrivateMissingAncestors(t *testing.T) {
+	base := t.TempDir()
+	root := filepath.Join(base, "one", "two", "data")
+	if err := fsperm.InitializeProcessOwner(); err != nil {
+		t.Fatal(err)
+	}
+	if err := Init(context.Background(), root); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{filepath.Join(base, "one"), filepath.Join(base, "one", "two"), root} {
+		if err := fsperm.CheckOwnerOnlyDirForChildren(path); err != nil {
+			t.Fatalf("new private ancestor %q is not owner-only with secure inheritance: %v", filepath.Base(path), err)
+		}
+	}
+}
+
+func TestSQLiteURIPathEscapingPreservesQuery(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "日本語 space #percent% question?.db")
+	extra := []string{"mode=ro", "immutable=1"}
+	wantQuery := "_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)&mode=ro&immutable=1"
+	uri := dsn(path, extra...)
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		t.Fatalf("parse file URI: %v", err)
+	}
+	if parsed.Scheme != "file" || parsed.Host != "" || parsed.Fragment != "" {
+		t.Fatalf("file URI has scheme=%q host=%q fragment=%q: %s", parsed.Scheme, parsed.Host, parsed.Fragment, uri)
+	}
+	wantPath := path
+	if filepath.Separator == '\\' {
+		wantPath = "/" + filepath.ToSlash(path)
+	}
+	if parsed.Path != wantPath {
+		t.Fatalf("decoded URI path = %q, want %q (%s)", parsed.Path, wantPath, uri)
+	}
+	if parsed.RawQuery != wantQuery {
+		t.Fatalf("URI query = %q, want %q", parsed.RawQuery, wantQuery)
+	}
+	backupQuery := "mode=ro&immutable=1&_pragma=foreign_keys(1)"
+	backupURI, err := url.Parse(sqliteFileURI(path, backupQuery))
+	if err != nil {
+		t.Fatalf("parse backup file URI: %v", err)
+	}
+	if backupURI.RawQuery != backupQuery {
+		t.Fatalf("backup URI query = %q, want %q", backupURI.RawQuery, backupQuery)
+	}
+	for _, escaped := range []string{"%20", "%23", "%25", "%3F", "%E6%97%A5"} {
+		if !strings.Contains(strings.ToUpper(uri), escaped) {
+			t.Fatalf("URI %q does not escape path character as %s", uri, escaped)
 		}
 	}
 }

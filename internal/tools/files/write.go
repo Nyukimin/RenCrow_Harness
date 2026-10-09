@@ -56,12 +56,12 @@ func tempName(dir string) (string, error) {
 }
 
 // stage writes data to a new file next to the target and flushes it to disk.
-func stage(dir string, data []byte, perm os.FileMode) (string, error) {
+func stage(dir string, data []byte, perm os.FileMode, preservePerm bool) (string, error) {
 	tmp, err := tempName(dir)
 	if err != nil {
 		return "", err
 	}
-	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perm)
+	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_EXCL, stageCreatePerm(perm, preservePerm))
 	if err != nil {
 		return "", toolerr.Fail(toolerr.CodeIO, "a temporary file could not be created")
 	}
@@ -69,6 +69,13 @@ func stage(dir string, data []byte, perm os.FileMode) (string, error) {
 		_ = f.Close()
 		_ = os.Remove(tmp)
 		return "", toolerr.Fail(toolerr.CodeIO, "a temporary file could not be written")
+	}
+	if preservePerm {
+		if err := restoreStagePerm(f, perm); err != nil {
+			_ = f.Close()
+			_ = os.Remove(tmp)
+			return "", toolerr.Fail(toolerr.CodeIO, "a temporary file's permissions could not be set")
+		}
 	}
 	if err := f.Sync(); err != nil {
 		_ = f.Close()
@@ -105,7 +112,7 @@ func CreateFile(ctx context.Context, sc Scope, a CreateArgs) (CreateResult, erro
 	}
 	dir := filepath.Dir(r.Abs)
 	data := []byte(a.Text)
-	tmp, err := stage(dir, data, 0o644)
+	tmp, err := stage(dir, data, 0o644, false)
 	if err != nil {
 		return CreateResult{}, err
 	}
@@ -210,7 +217,7 @@ func EditFile(ctx context.Context, sc Scope, a EditArgs) (EditResult, error) {
 		return EditResult{}, toolerr.Fail(toolerr.CodeCancelled, "the write was stopped")
 	}
 	dir := filepath.Dir(r.Abs)
-	tmp, err := stage(dir, out, info.Mode().Perm())
+	tmp, err := stage(dir, out, info.Mode().Perm(), true)
 	if err != nil {
 		return EditResult{}, err
 	}

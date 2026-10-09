@@ -1,0 +1,208 @@
+{
+  "version": 2,
+  "impact": {
+    "globalPaths": [],
+    "ignore": []
+  },
+  "steps": [
+    {
+      "name": "test-runtime-layout",
+      "workingDirectory": ".",
+      "filePath": "pwsh",
+      "arguments": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-File",
+        "scripts/test-local.ps1",
+        "-SelfTest"
+      ],
+      "environment": {
+        "RENCROW_SOURCE_CANDIDATE_INPUT": "public-source-root",
+        "RENCROW_SOURCE_CANDIDATE_CONSUMER": "owner-runtime",
+        "RENCROW_SOURCE_CANDIDATE_FAILURE_ACTION": "block",
+        "RENCROW_SOURCE_CANDIDATE_MODE_POLICY": "tracked=git-index;unix-working-drift=recorded;windows-untracked=0644",
+        "RENCROW_SOURCE_CANDIDATE_PURPOSE": "share-one-immutable-source-across-checks"
+      },
+      "tier": "fast",
+      "alwaysRun": true,
+      "impact": {
+        "paths": [
+          "scripts/test-local*"
+        ],
+        "packages": [],
+        "globalPaths": []
+      },
+      "resourceLocks": [],
+      "timeoutSeconds": 30
+    },
+    {
+      "name": "format",
+      "workingDirectory": ".",
+      "filePath": "pwsh",
+      "arguments": [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$files = @(gofmt -l cmd internal pkg tools/source_candidate embed.go repo_hygiene_test.go); if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; if ($files.Count -gt 0) { $files; exit 1 }"
+      ],
+      "environment": {
+        "RENCROW_SOURCE_CANDIDATE_INPUT": "public-source-root",
+        "RENCROW_SOURCE_CANDIDATE_CONSUMER": "candidate",
+        "RENCROW_SOURCE_CANDIDATE_FAILURE_ACTION": "block",
+        "RENCROW_SOURCE_CANDIDATE_MODE_POLICY": "tracked=git-index;unix-working-drift=recorded;windows-untracked=0644",
+        "RENCROW_SOURCE_CANDIDATE_PURPOSE": "share-one-immutable-source-across-checks"
+      },
+      "tier": "fast",
+      "impact": {
+        "paths": [],
+        "packages": [
+          "./..."
+        ],
+        "globalPaths": []
+      },
+      "resourceLocks": [],
+      "timeoutSeconds": 60
+    },
+    {
+      "name": "go-vet",
+      "workingDirectory": ".",
+      "filePath": "go",
+      "arguments": [
+        "vet",
+        "./..."
+      ],
+      "environment": {
+        "RENCROW_SOURCE_CANDIDATE_INPUT": "public-source-root",
+        "RENCROW_SOURCE_CANDIDATE_CONSUMER": "candidate",
+        "RENCROW_SOURCE_CANDIDATE_FAILURE_ACTION": "block",
+        "RENCROW_SOURCE_CANDIDATE_MODE_POLICY": "tracked=git-index;unix-working-drift=recorded;windows-untracked=0644",
+        "RENCROW_SOURCE_CANDIDATE_PURPOSE": "share-one-immutable-source-across-checks"
+      },
+      "tier": "fast",
+      "impact": {
+        "paths": [],
+        "packages": [
+          "./..."
+        ],
+        "globalPaths": []
+      },
+      "resourceLocks": [],
+      "timeoutSeconds": 240,
+      "platform": [
+        "linux",
+        "darwin",
+        "windows"
+      ]
+    },
+    {
+      "name": "go-test",
+      "workingDirectory": ".",
+      "filePath": "go",
+      "arguments": [
+        "test",
+        "./...",
+        "-count=1",
+        "-race",
+        "-timeout=15m"
+      ],
+      "environment": {
+        "RENCROW_SOURCE_CANDIDATE_INPUT": "public-source-root",
+        "RENCROW_SOURCE_CANDIDATE_CONSUMER": "candidate",
+        "RENCROW_SOURCE_CANDIDATE_FAILURE_ACTION": "block",
+        "RENCROW_SOURCE_CANDIDATE_MODE_POLICY": "tracked=git-index;unix-working-drift=recorded;windows-untracked=0644",
+        "RENCROW_SOURCE_CANDIDATE_PURPOSE": "share-one-immutable-source-across-checks"
+      },
+      "testFiles": [
+        "repo_hygiene_test.go",
+        "**/*_test.go"
+      ],
+      "tier": "heavy",
+      "safetyGate": true,
+      "impact": {
+        "paths": [
+          "docs/**",
+          "schemas/**",
+          "migrations/**",
+          "prompts/**",
+          "testdata/contract/**",
+          "tools/speccheck/**"
+        ],
+        "packages": [
+          "./..."
+        ],
+        "globalPaths": []
+      },
+      "resourceLocks": [],
+      "timeoutSeconds": 3600,
+      "platform": [
+        "linux",
+        "darwin"
+      ]
+    },
+    {
+      "name": "go-build",
+      "workingDirectory": ".",
+      "filePath": "go",
+      "arguments": [
+        "build",
+        "./..."
+      ],
+      "environment": {
+        "RENCROW_SOURCE_CANDIDATE_INPUT": "public-source-root",
+        "RENCROW_SOURCE_CANDIDATE_CONSUMER": "candidate",
+        "RENCROW_SOURCE_CANDIDATE_FAILURE_ACTION": "block",
+        "RENCROW_SOURCE_CANDIDATE_MODE_POLICY": "tracked=git-index;unix-working-drift=recorded;windows-untracked=0644",
+        "RENCROW_SOURCE_CANDIDATE_PURPOSE": "share-one-immutable-source-across-checks"
+      },
+      "tier": "fast",
+      "impact": {
+        "paths": [],
+        "packages": [
+          "./..."
+        ],
+        "globalPaths": []
+      },
+      "resourceLocks": [],
+      "timeoutSeconds": 240,
+      "platform": [
+        "linux",
+        "darwin",
+        "windows"
+      ]
+    },
+    {
+      "name": "speccheck",
+      "workingDirectory": ".",
+      "filePath": "python",
+      "arguments": [
+        "-c",
+        "import pathlib, shutil, subprocess, sys, tempfile; source = pathlib.Path.cwd(); temporary = tempfile.TemporaryDirectory(); copy = pathlib.Path(temporary.name) / 'repo'; shutil.copytree(source, copy); [subprocess.run([sys.executable, script], cwd=copy, check=True) for script in ('tools/speccheck/validate_package.py', 'tools/speccheck/validate_contract_details.py', 'tools/speccheck/validate_wire_contracts.py')]"
+      ],
+      "environment": {
+        "RENCROW_SOURCE_CANDIDATE_INPUT": "public-source-root",
+        "RENCROW_SOURCE_CANDIDATE_CONSUMER": "candidate",
+        "RENCROW_SOURCE_CANDIDATE_FAILURE_ACTION": "block",
+        "RENCROW_SOURCE_CANDIDATE_MODE_POLICY": "tracked=git-index;unix-working-drift=recorded;windows-untracked=0644",
+        "RENCROW_SOURCE_CANDIDATE_PURPOSE": "share-one-immutable-source-across-checks"
+      },
+      "testFiles": [
+        "tools/speccheck/validate_*.py"
+      ],
+      "tier": "fast",
+      "impact": {
+        "paths": [
+          "docs/**",
+          "schemas/**",
+          "migrations/**",
+          "prompts/**",
+          "testdata/contract/**",
+          "tools/speccheck/**"
+        ],
+        "packages": [],
+        "globalPaths": []
+      },
+      "resourceLocks": [],
+      "timeoutSeconds": 180
+    }
+  ]
+}

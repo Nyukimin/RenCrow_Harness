@@ -87,6 +87,38 @@ func TestBackupCreatesItsPrivateRootAndRefusesOpenOnes(t *testing.T) {
 	}
 }
 
+func TestCheckSQLiteSidecarsRejectsUnsafeExistingFileWithoutMutation(t *testing.T) {
+	root := privateDir(t, "sidecars")
+	database := filepath.Join(root, DatabaseFile)
+	sidecar := database + "-wal"
+	contents := []byte("keep this existing sidecar unchanged")
+	if err := os.WriteFile(sidecar, contents, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(sidecar, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	before, err := os.Stat(sidecar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = checkSQLiteSidecars(database)
+	if !errors.Is(err, fsperm.ErrNotOwnerOnly) {
+		t.Fatalf("sidecar check error = %v, want ErrNotOwnerOnly", err)
+	}
+	after, err := os.Stat(sidecar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(sidecar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if before.Mode().Perm() != after.Mode().Perm() || string(got) != string(contents) {
+		t.Fatal("sidecar check changed the existing file")
+	}
+}
+
 func TestBackupNeverWritesInsideTheDataRoot(t *testing.T) {
 	e := newEnv(t)
 	for name, dir := range map[string]string{

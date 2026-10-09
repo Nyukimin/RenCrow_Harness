@@ -65,7 +65,17 @@ func TryLock(path string, mode Mode) (*Lock, error) {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return nil, fmt.Errorf("oslock: %w", fsperm.WithoutPath(err))
 	}
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
+	f, err := fsperm.CreatePrivateFile(path)
+	if errors.Is(err, os.ErrExist) {
+		before, statErr := os.Lstat(path)
+		if statErr != nil {
+			return nil, fmt.Errorf("oslock: %w", fsperm.WithoutPath(statErr))
+		}
+		if !before.Mode().IsRegular() {
+			return nil, ErrBadPath
+		}
+		f, err = os.OpenFile(path, os.O_RDWR, 0)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("oslock: %w", fsperm.WithoutPath(err))
 	}
@@ -76,6 +86,10 @@ func TryLock(path string, mode Mode) (*Lock, error) {
 	if err1 != nil || err2 != nil || !before.Mode().IsRegular() || !os.SameFile(before, after) {
 		_ = f.Close()
 		return nil, ErrBadPath
+	}
+	if err := fsperm.CheckOwnerOnlyFile(path); err != nil {
+		_ = f.Close()
+		return nil, fmt.Errorf("oslock: private lock file: %w", fsperm.WithoutPath(err))
 	}
 	if err := lockFile(f, mode); err != nil {
 		_ = f.Close()

@@ -154,6 +154,14 @@ func (r *rig) process() (*sqlite.Store, *service.Service) {
 	if err != nil {
 		r.t.Fatal(err)
 	}
+	r.t.Log("servicecreated")
+	r.t.Cleanup(func() {
+		if _, err := svc.Shutdown(protocol.ShutdownInput{Mode: "cancel", DeadlineSeconds: 1}); err != nil {
+			r.t.Errorf("shutting down test service: %v", err)
+		}
+		svc.Quiesce()
+		r.t.Log("servicequiesced")
+	})
 	return store, svc
 }
 
@@ -699,6 +707,41 @@ func TestAnotherProcessThatDrivesTheThreadMakesNewStartsBusyButReplaysStillAnswe
 	wantCode(t, err, protocol.CodeIdempotencyConflict)
 	if r.count("receipts") != rows {
 		t.Fatal("the busy process wrote something")
+	}
+}
+
+func TestRigRestartQuiescesEveryServiceGeneration(t *testing.T) {
+	generationStarted := make(chan struct{})
+	oldGenerationCancelled := make(chan struct{})
+	t.Run("restart keeps old service cleanup bound to its generation", func(t *testing.T) {
+		model := harnesstest.NewFake()
+		model.OnGenerate = func(ctx context.Context, _ modelport.ChatRequest) {
+			close(generationStarted)
+			<-ctx.Done()
+			close(oldGenerationCancelled)
+		}
+
+		r := newModelRig(t, model, nil, nil)
+		info := r.openSession("cleanup.open.0000000001")
+		r.startRun(info.ThreadID, "cleanup.start.000000001", "hang")
+		select {
+		case <-generationStarted:
+		case <-time.After(5 * time.Second):
+			t.Fatal("old service did not start its hanging generation")
+		}
+
+		oldService := r.svc
+		restarted, conn, _ := r.restart()
+		r.svc, r.conn = restarted, conn
+		if r.svc == oldService {
+			t.Fatal("restart did not replace the rig's current service")
+		}
+	})
+
+	select {
+	case <-oldGenerationCancelled:
+	case <-time.After(2 * time.Second):
+		t.Fatal("old service generation context was not cancelled during subtest cleanup")
 	}
 }
 

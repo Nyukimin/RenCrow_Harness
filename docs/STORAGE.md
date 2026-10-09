@@ -31,7 +31,7 @@ Harness configured data_root配下の`execution.sqlite3`を正本とし、`locks
 
 ## 3. SQLite設定とwriter
 
-foreign_keys=ON、journal_mode=WAL、synchronous=FULL。local filesystemを前提にし、network share上でこの保証を広告しない。schema migrationは新規driver受付停止とbackup後、唯一のmigration processが実行する。DBのpermissionはowner-onlyを基準に、Windowsは同等ACLを設定する。
+foreign_keys=ON、journal_mode=WAL、synchronous=FULL。local filesystemを前提にし、network share上でこの保証を広告しない。schema migrationは新規driver受付停止とbackup後、唯一のmigration processが実行する。DBのpermissionはowner-onlyを基準にする。Windowsではrootとbackup directoryにowner SIDだけを許可し、file・directory双方へ継承するprotected DACLを新規作成時に設定する。Init/Backupが作る欠けたpath componentにも同じACLを設定し、既存componentは変更しない。既存rootはfile・directory双方へのfull-control継承を持つ必要があり、検査はACLを修復しない。standalone CLIは書込み前にprocess tokenのdefault ownerだけをTokenUser SIDへ合わせる。埋込み呼出しはtoken ownerが一致しない場合、storage書込み前に失敗する。
 
 ThreadごとのOS lockを取ったprocessだけがwriter_epochを増やしてdriverになる。lease heartbeatは診断用で、期限切れだけでOS lockを奪わない。各短いwrite transactionはexpected epoch/revisionsをWHEREで比較し、affected row=1を確認する。
 

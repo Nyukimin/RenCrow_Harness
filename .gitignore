@@ -26,6 +26,7 @@ logs/
 
 # Temporary, coverage and profiling output
 tmp/
+/Tmp/
 coverage.*
 *.cover
 *.prof

@@ -181,7 +181,7 @@ Tool外部副作用とSQLiteは同一transactionではない。実行前記録�
 
 実装時のTool schemaは上記契約から生成し、LLM_REQUEST toolsへ渡す。shellはprocess.execで`executable`が登録済みshell profileの場合だけ許可し、payloadの文字列を勝手に`sh -c`へ変換しない。
 
-file.editは読取snapshot、workspace lock、preimage hashを照合し、同directoryの一時fileへ書いてflush後に原子的renameする。rename後のdurability失敗はunknown。外部非協調writerとの完全なCASは保証範囲外と明記し、変更検出時はconflict。symlink/junction、case folding、Windows reparse point、path traversalを三OSでテストし、文字列prefix検査だけでcontainmentを認定しない。
+file.editは読取snapshot、workspace lock、preimage hashを照合し、同directoryの一時fileへ書いてflush後に原子的renameする。Unixでは置換fileの`0777` permission bitsを元fileから保持し、復元に失敗した場合はrenameせずI/O failureにする。`file.create`のmodeは通常どおりumaskの適用を受ける。setuid/setgid/sticky、owner/group、extended ACLは保持を保証しない。rename後のdurability失敗はunknown。外部非協調writerとの完全なCASは保証範囲外と明記し、変更検出時はconflict。symlink/junction、case folding、Windows reparse point、path traversalを三OSでテストし、文字列prefix検査だけでcontainmentを認定しない。
 
 Process captureはbounded chunkでprivate storeへ保存。上限到達時はcapture_partialを記録し、process停止手順へ進む。missing bytesを「元からなかった」としない。全出力を保存できなかった結果からfull completion linkを作らない。
 

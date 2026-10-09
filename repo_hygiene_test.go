@@ -30,8 +30,8 @@ import (
 // on and the reason, and the test fails when an entry no longer matches anything, so that the
 // list cannot outlive what it excuses.
 //
-// The whole tree is read except .git: a file that git would not commit is still a file a
-// build, an archive or a copy of the directory would carry.
+// The whole source candidate is read except its repository-root .git: a file that git would not
+// commit is still a file a build, an archive or a copy of the directory would carry.
 
 // Kinds of what is found.
 const (
@@ -44,6 +44,8 @@ const (
 // maxScanBytes is the largest file the guard reads. A larger text file is not skipped: it is a
 // failure, so that a file can never become unscanned by growing.
 const maxScanBytes = 16 << 20
+
+const sourceCandidateManifestLabel = "source-candidate/manifest.json"
 
 // sniffBytes is how much of a file is looked at to tell binary from text.
 const sniffBytes = 8000
@@ -218,8 +220,8 @@ func scanLine(file string, n int, line string) []finding {
 	return out
 }
 
-// scanTree reads every file under root except what is in a .git, and returns what it finds
-// with the allowance applied, and the entries of the allowance that excused nothing.
+// scanTree reads every file under root except the repository-root .git, and returns what it
+// finds with the allowance applied, and the entries of the allowance that excused nothing.
 func scanTree(root string, allow []allowance) (found []finding, unused []allowance, err error) {
 	used := make([]bool, len(allow))
 	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, werr error) error {
@@ -227,10 +229,16 @@ func scanTree(root string, allow []allowance) (found []finding, unused []allowan
 			return werr
 		}
 		if d.Name() == ".git" {
-			if d.IsDir() {
-				return filepath.SkipDir
+			rel, rerr := filepath.Rel(root, path)
+			if rerr != nil {
+				return rerr
 			}
-			return nil // a worktree's .git file holds the path of the repository it belongs to
+			if rel == ".git" {
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil // a worktree's root .git file holds the path of the repository it belongs to
+			}
 		}
 		if d.IsDir() {
 			return nil
@@ -323,6 +331,35 @@ func readScannable(path string, size int64) ([]byte, error) {
 	return append(head, rest...), nil
 }
 
+// scanCandidateManifest applies the same privacy patterns as scanTree to the one
+// owner-bound manifest stored outside the candidate. Diagnostics use only this
+// fixed relative label; the caller-provided path and scanned contents never escape.
+func scanCandidateManifest(path string) ([]finding, error) {
+	if strings.TrimSpace(path) == "" {
+		return nil, errors.New("source candidate manifest path is required")
+	}
+	before, err := os.Lstat(path)
+	if err != nil || !before.Mode().IsRegular() || before.Mode()&fs.ModeSymlink != 0 {
+		return nil, errors.New("source candidate manifest is missing or is not a regular file")
+	}
+	data, err := readScannable(path, before.Size())
+	if errors.Is(err, errTooLarge) {
+		return []finding{{File: sourceCandidateManifestLabel, Kind: kindTooLarge}}, nil
+	}
+	if err != nil {
+		return nil, errors.New("source candidate manifest could not be read as text")
+	}
+	after, err := os.Lstat(path)
+	if err != nil || !after.Mode().IsRegular() || !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) {
+		return nil, errors.New("source candidate manifest changed while it was scanned")
+	}
+	var found []finding
+	for lineNumber, line := range strings.Split(string(data), "\n") {
+		found = append(found, scanLine(sourceCandidateManifestLabel, lineNumber+1, line)...)
+	}
+	return found, nil
+}
+
 // excusedBy is the index of the allowance that excuses the finding on this line, or -1.
 func excusedBy(allow []allowance, f finding, line string) int {
 	for i, a := range allow {
@@ -338,8 +375,13 @@ func excusedBy(allow []allowance, f finding, line string) int {
 func TestTheRepositoryHoldsNoRealPathPrivateAddressOrSecret(t *testing.T) {
 	found, unused, err := scanTree(".", allowances)
 	if err != nil {
+		t.Fatal("repository source candidate could not be scanned")
+	}
+	manifestFindings, err := scanCandidateManifest(os.Getenv("RENCROW_SOURCE_CANDIDATE_MANIFEST"))
+	if err != nil {
 		t.Fatal(err)
 	}
+	found = append(found, manifestFindings...)
 	for _, f := range found {
 		t.Errorf("%s", f)
 	}
@@ -349,6 +391,70 @@ func TestTheRepositoryHoldsNoRealPathPrivateAddressOrSecret(t *testing.T) {
 	if len(found) > 0 {
 		t.Log("Write an example path as a placeholder (<user>, $HOME) and an example address from a documentation range; " +
 			"an address that a test must be given to refuse goes in the allowance of repo_hygiene_test.go with its reason.")
+	}
+}
+
+func TestCandidateManifestPrivacyScanUsesSanitizedEvidence(t *testing.T) {
+	clean := t.TempDir()
+	plant(t, clean, map[string][]byte{"readme.md": []byte("public source\n")})
+	treeFindings, _, err := scanTree(clean, nil)
+	if err != nil || len(treeFindings) != 0 {
+		t.Fatalf("clean candidate scan = %v, %v", treeFindings, err)
+	}
+
+	user := "al" + "ice"
+	secret := "s" + "k-" + strings.Repeat("a", 40)
+	manifestPath := filepath.Join(t.TempDir(), "manifest.json")
+	manifest := []byte("path /Us" + "ers/" + user + "/work\naddress " + ip(10, 20, 30, 40) + "\ncredential " + secret + "\n")
+	if err := os.WriteFile(manifestPath, manifest, 0o600); err != nil {
+		t.Fatal("could not create candidate manifest fixture")
+	}
+	found, err := scanCandidateManifest(manifestPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]int{}
+	for _, finding := range found {
+		got[finding.Kind]++
+		diagnostic := finding.String()
+		if strings.Contains(diagnostic, manifestPath) || strings.Contains(diagnostic, user) || strings.Contains(diagnostic, secret) || strings.Contains(diagnostic, ip(10, 20, 30, 40)) {
+			t.Fatal("manifest finding exposed an absolute path or scanned content")
+		}
+		if finding.File != sourceCandidateManifestLabel {
+			t.Fatalf("manifest finding label = %q, want sanitized relative label", finding.File)
+		}
+	}
+	if got[kindRealPath] == 0 || got[kindPrivateIP] == 0 || got[kindSecret] == 0 {
+		t.Fatalf("manifest-only markers were not all detected: %v", got)
+	}
+}
+
+func TestCandidateManifestPrivacyScanFailsClosedWithoutExposingItsPath(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing-manifest.json")
+	for _, path := range []string{"", missing, t.TempDir()} {
+		_, err := scanCandidateManifest(path)
+		if err == nil {
+			t.Fatal("invalid source candidate manifest unexpectedly passed the privacy scanner")
+		}
+		if path != "" && strings.Contains(err.Error(), path) {
+			t.Fatal("manifest scan error exposed its absolute path")
+		}
+	}
+}
+
+func TestCandidateManifestPrivacyScanFailsClosedOnUnreadableFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "manifest.json")
+	if err := os.WriteFile(path, []byte("status=candidate\n"), 0o000); err != nil {
+		t.Fatal("could not create unreadable candidate manifest fixture")
+	}
+	file, err := os.Open(path)
+	if err == nil {
+		_ = file.Close()
+		t.Skip("the current process can read a mode-000 file")
+	}
+	_, err = scanCandidateManifest(path)
+	if err == nil || strings.Contains(err.Error(), path) {
+		t.Fatal("unreadable manifest did not fail closed with a sanitized error")
 	}
 }
 
@@ -466,7 +572,7 @@ func TestTheGuardFailsOnWhatItIsMeantToFind(t *testing.T) {
 	}
 
 	// What is not to be found: placeholders, addresses that are not private, numbers that are not
-	// addresses, a binary file, and whatever is in a .git.
+	// addresses, a binary file, and whatever is in the repository-root .git.
 	clean := t.TempDir()
 	plant(t, clean, map[string][]byte{
 		"docs/paths.md":    []byte("cd /Us" + "ers/<user>/work\ncd /ho" + "me/$USER/work\ncd %USERPROFILE%\\work\nC:\\Us" + "ers\\<name>\\x\ncd ~/work\ncd /Us" + "ers/{name}/x\n"),
@@ -526,6 +632,33 @@ func TestAFileTooLargeToBeReadIsAFailureAndNotASkip(t *testing.T) {
 	found, _, err := scanTree(dir, nil)
 	if err != nil || len(found) != 1 || found[0].Kind != kindTooLarge {
 		t.Fatalf("%v %v", err, found)
+	}
+}
+
+func TestTheGuardSkipsOnlyTheRepositoryRootGitDirectory(t *testing.T) {
+	dir := t.TempDir()
+	marker := "sk-" + strings.Repeat("z", 40)
+	plant(t, dir, map[string][]byte{
+		".git/config":            []byte("root metadata " + marker + "\n"),
+		"nested/.git/config":     []byte("nested metadata " + marker + "\n"),
+		"nested/Tmp/ignored.txt": []byte("nested Tmp remains source: " + ip(10, 2, 3, 4) + "\n"),
+	})
+	found, unused, err := scanTree(dir, nil)
+	if err != nil || len(unused) != 0 {
+		t.Fatalf("%v %v", err, unused)
+	}
+	got := make(map[string][]finding)
+	for _, finding := range found {
+		got[finding.File] = append(got[finding.File], finding)
+	}
+	if len(got[".git/config"]) != 0 {
+		t.Fatalf("root .git should remain excluded: %v", got[".git/config"])
+	}
+	if len(got["nested/.git/config"]) != 1 || got["nested/.git/config"][0].Kind != kindSecret {
+		t.Fatalf("nested .git was not scanned: %v", got["nested/.git/config"])
+	}
+	if len(got["nested/Tmp/ignored.txt"]) != 1 || got["nested/Tmp/ignored.txt"][0].Kind != kindPrivateIP {
+		t.Fatalf("nested Tmp was not scanned: %v", got["nested/Tmp/ignored.txt"])
 	}
 }
 

@@ -100,7 +100,19 @@ func (s *Store) Close() error { return s.db.Close() }
 
 func dsn(path string, extra ...string) string {
 	q := append([]string{"_pragma=foreign_keys(1)", "_pragma=busy_timeout(" + fmt.Sprint(busyTimeoutMS) + ")"}, extra...)
-	return (&url.URL{Scheme: "file", Path: path, RawQuery: strings.Join(q, "&")}).String()
+	return sqliteFileURI(path, strings.Join(q, "&"))
+}
+
+func sqliteFileURI(path, rawQuery string) string {
+	if filepath.Separator == '\\' {
+		volume := filepath.VolumeName(path)
+		absolute := filepath.IsAbs(path)
+		path = filepath.ToSlash(path)
+		if absolute && volume != "" && !strings.HasPrefix(path, "/") {
+			path = "/" + path
+		}
+	}
+	return (&url.URL{Scheme: "file", Path: path, RawQuery: rawQuery}).String()
 }
 
 // openDB opens a one-connection pool: SQLite serializes writers anyway, and one
@@ -125,22 +137,56 @@ func resolveDataRoot(dataRoot string) (string, error) {
 	return dataRoot, nil
 }
 
+// createPrivateDirAll creates missing components one at a time through the
+// owner-only creator, preserving MkdirAll's Unix modes while applying explicit
+// protected ACLs to every new Windows directory.
+func createPrivateDirAll(path string) error {
+	var missing []string
+	for current := path; ; {
+		info, err := os.Stat(current)
+		if err == nil {
+			if !info.IsDir() {
+				return fmt.Errorf("sqlite: a private directory ancestor is not a directory")
+			}
+			break
+		}
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("sqlite: private directory ancestor: %w", fsperm.WithoutPath(err))
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return fmt.Errorf("sqlite: private directory path has no existing ancestor")
+		}
+		missing = append(missing, current)
+		current = parent
+	}
+	for i := len(missing) - 1; i >= 0; i-- {
+		if err := fsperm.CreatePrivateDir(missing[i]); err != nil && !errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("sqlite: create private directory: %w", fsperm.WithoutPath(err))
+		}
+		if err := fsperm.CheckOwnerOnlyDirForChildren(missing[i]); err != nil {
+			return fmt.Errorf("sqlite: private directory: %w", fsperm.WithoutPath(err))
+		}
+	}
+	return nil
+}
+
 // Init creates a new store in dataRoot. The directory is created (owner-only) if
 // it is missing; if it exists it must already be owner-only and must not already
 // hold a store. The schema is applied to a private temporary file which is only
 // linked to its final name once it has been verified, so a failed Init never
 // leaves a half-built store, and an existing store is never replaced.
 func Init(ctx context.Context, dataRoot string) error {
+	if err := fsperm.CheckProcessOwner(); err != nil {
+		return fmt.Errorf("sqlite: process owner: %w", err)
+	}
 	root, err := resolveDataRoot(dataRoot)
 	if err != nil {
 		return err
 	}
 	if _, err := os.Lstat(root); errors.Is(err, os.ErrNotExist) {
-		if err := os.MkdirAll(root, 0o700); err != nil {
+		if err := createPrivateDirAll(root); err != nil {
 			return fmt.Errorf("sqlite: create data root: %w", fsperm.WithoutPath(err))
-		}
-		if err := os.Chmod(root, 0o700); err != nil {
-			return fmt.Errorf("sqlite: data root permissions: %w", fsperm.WithoutPath(err))
 		}
 	} else if err != nil {
 		return fmt.Errorf("sqlite: data root: %w", fsperm.WithoutPath(err))
@@ -149,21 +195,27 @@ func Init(ctx context.Context, dataRoot string) error {
 	if err != nil {
 		return fmt.Errorf("sqlite: data root: %w", fsperm.WithoutPath(err))
 	}
-	if err := fsperm.CheckOwnerOnlyDir(real); err != nil {
+	if err := fsperm.CheckOwnerOnlyDirForChildren(real); err != nil {
 		return fmt.Errorf("sqlite: data root: %w", fsperm.WithoutPath(err))
 	}
 	final := filepath.Join(real, DatabaseFile)
 	if _, err := os.Lstat(final); err == nil {
+		if err := fsperm.CheckOwnerOnlyFile(final); err != nil {
+			return fmt.Errorf("sqlite: database file: %w", fsperm.WithoutPath(err))
+		}
+		if err := checkSQLiteSidecars(final); err != nil {
+			return err
+		}
 		return ErrAlreadyInitialized
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("sqlite: %w", fsperm.WithoutPath(err))
 	}
 	for _, sub := range []string{"locks", "staging"} {
 		p := filepath.Join(real, sub)
-		if err := os.Mkdir(p, 0o700); err != nil && !errors.Is(err, os.ErrExist) {
+		if err := fsperm.CreatePrivateDir(p); err != nil && !errors.Is(err, os.ErrExist) {
 			return fmt.Errorf("sqlite: %w", fsperm.WithoutPath(err))
 		}
-		if err := fsperm.CheckOwnerOnlyDir(p); err != nil {
+		if err := fsperm.CheckOwnerOnlyDirForChildren(p); err != nil {
 			return fmt.Errorf("sqlite: %s: %w", sub, err)
 		}
 	}
@@ -184,11 +236,19 @@ func Init(ctx context.Context, dataRoot string) error {
 		return fmt.Errorf("sqlite: random: %w", fsperm.WithoutPath(err))
 	}
 	tmp := filepath.Join(real, DatabaseFile+".init-"+hex.EncodeToString(suffix[:]))
-	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
+	f, err := fsperm.CreatePrivateFile(tmp)
 	if err != nil {
 		return fmt.Errorf("sqlite: %w", fsperm.WithoutPath(err))
 	}
-	_ = f.Close()
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("sqlite: %w", fsperm.WithoutPath(err))
+	}
+	if err := fsperm.CheckOwnerOnlyFile(tmp); err != nil {
+		return fmt.Errorf("sqlite: temporary database file: %w", fsperm.WithoutPath(err))
+	}
+	if err := checkSQLiteSidecars(tmp); err != nil {
+		return err
+	}
 	defer func() {
 		for _, p := range []string{tmp, tmp + "-wal", tmp + "-shm", tmp + "-journal"} {
 			_ = os.Remove(p)
@@ -219,6 +279,12 @@ func Init(ctx context.Context, dataRoot string) error {
 	if err := db.Close(); err != nil {
 		return fmt.Errorf("sqlite: %w", fsperm.WithoutPath(err))
 	}
+	if err := fsperm.CheckOwnerOnlyFile(tmp); err != nil {
+		return fmt.Errorf("sqlite: temporary database file: %w", fsperm.WithoutPath(err))
+	}
+	if err := checkSQLiteSidecars(tmp); err != nil {
+		return err
+	}
 	// Link, not rename: linking fails if the name appeared in the meantime, so a
 	// concurrent Init cannot be overwritten.
 	if err := os.Link(tmp, final); err != nil {
@@ -235,6 +301,9 @@ func Init(ctx context.Context, dataRoot string) error {
 // WAL mode, and applies the connection settings. It never creates a file and never
 // writes to a database it refuses.
 func Open(ctx context.Context, dataRoot string, opts Options) (*Store, error) {
+	if err := fsperm.CheckProcessOwner(); err != nil {
+		return nil, fmt.Errorf("sqlite: process owner: %w", err)
+	}
 	root, err := resolveDataRoot(dataRoot)
 	if err != nil {
 		return nil, err
@@ -243,8 +312,19 @@ func Open(ctx context.Context, dataRoot string, opts Options) (*Store, error) {
 	if err != nil {
 		return nil, fmt.Errorf("sqlite: data root: %w", fsperm.WithoutPath(err))
 	}
-	if err := fsperm.CheckOwnerOnlyDir(real); err != nil {
+	if err := fsperm.CheckOwnerOnlyDirForChildren(real); err != nil {
 		return nil, fmt.Errorf("sqlite: data root: %w", fsperm.WithoutPath(err))
+	}
+	for _, sub := range []string{"locks", "staging"} {
+		dir := filepath.Join(real, sub)
+		if _, err := os.Lstat(dir); errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return nil, fmt.Errorf("sqlite: %s: %w", sub, fsperm.WithoutPath(err))
+		}
+		if err := fsperm.CheckOwnerOnlyDirForChildren(dir); err != nil {
+			return nil, fmt.Errorf("sqlite: %s: %w", sub, fsperm.WithoutPath(err))
+		}
 	}
 	path := filepath.Join(real, DatabaseFile)
 	if _, err := os.Lstat(path); errors.Is(err, os.ErrNotExist) {
@@ -254,6 +334,9 @@ func Open(ctx context.Context, dataRoot string, opts Options) (*Store, error) {
 	}
 	if err := fsperm.CheckOwnerOnlyFile(path); err != nil {
 		return nil, fmt.Errorf("sqlite: database file: %w", err)
+	}
+	if err := checkSQLiteSidecars(path); err != nil {
+		return nil, err
 	}
 	// Look at the header before connecting: connecting to an empty or foreign file
 	// would let SQLite write to it.
@@ -287,7 +370,26 @@ func Open(ctx context.Context, dataRoot string, opts Options) (*Store, error) {
 		_ = db.Close()
 		return nil, err
 	}
+	if err := checkSQLiteSidecars(path); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
 	return s, nil
+}
+
+func checkSQLiteSidecars(path string) error {
+	for _, suffix := range []string{"-wal", "-shm", "-journal"} {
+		sidecar := path + suffix
+		if _, err := os.Lstat(sidecar); errors.Is(err, os.ErrNotExist) {
+			continue
+		} else if err != nil {
+			return fmt.Errorf("sqlite: sidecar: %w", fsperm.WithoutPath(err))
+		}
+		if err := fsperm.CheckOwnerOnlyFile(sidecar); err != nil {
+			return fmt.Errorf("sqlite: sidecar: %w", fsperm.WithoutPath(err))
+		}
+	}
+	return nil
 }
 
 // readPageSize returns the page size recorded in the SQLite file header, and
