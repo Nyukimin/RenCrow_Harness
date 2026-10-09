@@ -3780,6 +3780,61 @@
             "minItems": 0,
             "maxItems": 128
           },
+          "verification": {
+            "type": "object",
+            "properties": {
+              "format_version": {
+                "const": "rencrow-verification-plan/v1"
+              },
+              "process_profile_ref": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "executable": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "argv": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "maxItems": 256
+              },
+              "cwd": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "env_profile_ref": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "timeout_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 86400
+              },
+              "pass_condition": {
+                "const": "exit_zero"
+              }
+            },
+            "required": [
+              "format_version",
+              "process_profile_ref",
+              "executable",
+              "argv",
+              "cwd",
+              "env_profile_ref",
+              "timeout_seconds",
+              "pass_condition"
+            ],
+            "additionalProperties": false
+          },
           "limits": {
             "type": "object",
             "properties": {

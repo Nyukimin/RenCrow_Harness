@@ -511,7 +511,39 @@ func (d *Deployment) loadRegistry(path string) error {
 				return invalidf("policy %q names an undefined env profile", p.ID)
 			}
 		}
+		if v := p.Verification; v != nil {
+			if err := validateVerificationGrant(p, *v, d.process); err != nil {
+				return invalidf("policy %q verification plan: %w", p.ID, err)
+			}
+		}
 		d.registry[p.ID] = p
+	}
+	return nil
+}
+
+func validateVerificationGrant(p Policy, v VerificationPlan, profiles map[string]ProcessProfile) error {
+	if !slices.Contains(p.ProcessProfiles, v.ProcessProfileRef) {
+		return fmt.Errorf("%w: verification process profile is not granted by the policy", ErrInvalid)
+	}
+	selected, ok := profiles[v.ProcessProfileRef]
+	if !ok || selected.Executable != v.Executable || selected.IsShell {
+		return fmt.Errorf("%w: verification must name a direct-execution process profile for its executable", ErrInvalid)
+	}
+	matches := 0
+	for _, name := range p.ProcessProfiles {
+		profile, exists := profiles[name]
+		if !exists || profile.Executable != v.Executable || profile.IsShell || len(v.Argv) < len(profile.ArgvPrefix) {
+			continue
+		}
+		if slices.Equal(v.Argv[:len(profile.ArgvPrefix)], profile.ArgvPrefix) {
+			matches++
+			if name != v.ProcessProfileRef {
+				return fmt.Errorf("%w: verification process profile resolution is ambiguous", ErrInvalid)
+			}
+		}
+	}
+	if matches != 1 {
+		return fmt.Errorf("%w: verification argv does not resolve to exactly its named process profile", ErrInvalid)
 	}
 	return nil
 }

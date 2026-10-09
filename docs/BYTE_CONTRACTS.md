@@ -97,6 +97,26 @@ HMAC key_fileは**64文字の小文字hex（32 bytes）＋任意の末尾LF1個*
 
 ## 6. checkpointとその他のdigest
 
+### 6.1 verification criteria revision
+
+`criteria_revision=lowercase_hex(SHA256(CJ1(criteria)))`。`criteria`は次の閉じたobjectで、値はeffective policyから解決したものを使う。
+
+```json
+{
+  "format_version": "rencrow-verification-criteria/v1",
+  "plan": {"format_version":"rencrow-verification-plan/v1","process_profile_ref":"…","executable":"…","argv":[],"cwd":"…","env_profile_ref":"…","timeout_seconds":1,"pass_condition":"exit_zero"},
+  "process_profile": {"name":"…","executable":"…","is_shell":false,"argv_prefix":[]},
+  "env_profile": {"name":"…","values":{}},
+  "workspace_root": "…",
+  "resolved_cwd": "…",
+  "policy_ref": "…",
+  "mode": "trusted_host",
+  "policy_revision": "…"
+}
+```
+
+Object keysをCJ1で直列化してからSHA-256する。argvの順序とenvironment key/valueは意味を保持する。`resolved_cwd`はreal workspace rootとplan cwdを結合し、path separatorを現在OSの形式にしたclean absolute pathである。`policy_revision`は`rencrow-effective-policy/v1`の現行式で、verification planがあるpolicyだけ`policy.verification` canonical objectを追加する。planなしのeffective policy objectは従来bytesを維持する。CLIやRPCはこのhashだけを公開し、argvやenvironment valueは公開しない。
+
 candidate_bytes=`UTF8("rencrow-checkpoint-candidate/v1")+0x00+CJ1(CheckpointCandidate)`。
 candidate_hash=lowercase_hex(SHA256(candidate_bytes))。改行やBOMなし。checkpoint payloadの中にcandidate_hash自体を含めない。再encodeした別bytesで保存せず、検証したbytesをそのままBLOBへ渡す。
 

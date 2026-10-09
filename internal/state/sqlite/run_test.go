@@ -220,6 +220,31 @@ func TestTheStoreStepsOfARunFromAdmissionToItsResult(t *testing.T) {
 	}
 }
 
+func TestPersistCompletedRunRefusesDeadlinePassed(t *testing.T) {
+	e := newEnv(t)
+	r := e.newRun("run.deadline.00000000000001")
+	r.goTo("PersistingResult")
+	deadline := protocol.FormatTimestamp(time.Unix(1, 0).UTC())
+	mustExec(t, e.s.db, "UPDATE runs SET deadline_at=? WHERE run_id=?", deadline, r.start.RunID)
+	final, finalEvidence := identity.NewMessageID().String(), identity.NewEvidenceID().String()
+	result := protocol.RunResult{
+		RunID: r.start.RunID, TaskID: r.start.TaskID, Status: "completed", Code: "FINAL_RESPONSE_ACCEPTED", FinalMessageID: &final, FinalText: "too late",
+		Verification: protocol.Verification{Status: "not_run", EvidenceIDs: []string{}}, EvidenceIDs: []string{finalEvidence}, UnresolvedActionIDs: []string{},
+	}
+	_, err := e.s.PersistTerminal(bg, r.fence, TerminalInput{
+		Result: result, FinalText: "too late", FinalEvidenceID: finalEvidence, ResultEvidenceID: identity.NewEvidenceID().String(),
+	})
+	if !errors.Is(err, ErrDeadlinePassed) {
+		t.Fatalf("a final after the Run deadline was adopted: %v", err)
+	}
+	if got := scalar[string](t, e.s.db, "SELECT phase||'/'||status FROM runs WHERE run_id=?", r.start.RunID); got != "PersistingResult/running" {
+		t.Fatalf("refusing the late final changed the Run: %s", got)
+	}
+	if scalar[int](t, e.s.db, "SELECT COUNT(*) FROM items WHERE message_id=?", final) != 0 || scalar[int](t, e.s.db, "SELECT COUNT(*) FROM context_entries WHERE message_id=?", final) != 0 {
+		t.Fatal("a late final entered Thread history")
+	}
+}
+
 func TestADriverThatLostTheThreadOrWasCancelledWritesNothing(t *testing.T) {
 	e := newEnv(t)
 	r := e.newRun("run.key.00000000000002")

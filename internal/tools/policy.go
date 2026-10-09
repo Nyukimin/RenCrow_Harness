@@ -29,7 +29,8 @@ type RunPolicy struct {
 	Revision string
 	Mode     string
 	// Workspace is the real workspace root.
-	Workspace string
+	Workspace                    string
+	verificationCriteriaRevision string
 
 	policy    config.Policy
 	processes []config.ProcessProfile
@@ -43,7 +44,8 @@ type RunPolicy struct {
 // profile, the file Tools only with a prefix of the kind they need. structured_only
 // never has process.exec.
 func newRunPolicy(ep config.EffectivePolicy) *RunPolicy {
-	p := &RunPolicy{Revision: ep.Revision, Mode: ep.Mode, Workspace: ep.WorkspaceRoot, policy: ep.Policy, processes: ep.ProcessProfiles, envs: map[string]config.EnvProfile{}}
+	p := &RunPolicy{Revision: ep.Revision, Mode: ep.Mode, Workspace: ep.WorkspaceRoot, policy: ep.Policy, processes: ep.ProcessProfiles,
+		envs: map[string]config.EnvProfile{}, verificationCriteriaRevision: ep.VerificationCriteriaRevision}
 	for _, e := range ep.EnvProfiles {
 		p.envs[e.Name] = e
 	}
@@ -68,6 +70,17 @@ func newRunPolicy(ep config.EffectivePolicy) *RunPolicy {
 		p.enabled = append(p.enabled, name)
 	}
 	return p
+}
+
+// VerificationPlan returns the immutable host-managed plan and its criteria
+// revision, if this effective policy has one.
+func (p *RunPolicy) VerificationPlan() (config.VerificationPlan, string, bool) {
+	if p == nil || p.policy.Verification == nil || p.Mode != protocol.ModeTrustedHost || p.verificationCriteriaRevision == "" {
+		return config.VerificationPlan{}, "", false
+	}
+	v := *p.policy.Verification
+	v.Argv = slices.Clone(v.Argv)
+	return v, p.verificationCriteriaRevision, true
 }
 
 // Names are the Tools available to the Run, in name order.

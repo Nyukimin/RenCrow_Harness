@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Nyukimin/RenCrow_Harness/internal/extensions"
 	"github.com/Nyukimin/RenCrow_Harness/internal/harnesstest"
 	"github.com/Nyukimin/RenCrow_Harness/internal/modelport"
 	"github.com/Nyukimin/RenCrow_Harness/pkg/protocol"
@@ -199,6 +200,55 @@ func TestAManualCompactionMakesACheckpointInASystemRunAndTheReceiptHoldsTheResul
 		t.Fatalf("the next Run is not prompted from the checkpoint:\n%.1500s", p)
 	}
 	_ = start
+}
+
+func TestManualCompactionCheckpointCommitSurvivesLateStopAndDeadline(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		deadlineSeconds int64
+		stopAfterCommit bool
+	}{
+		{name: "late cancellation", stopAfterCommit: true},
+		{name: "deadline after commit", deadlineSeconds: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var c *compactionRig
+			var thread, committedCheckpoint string
+			lateStop := onPoint(extensions.AfterCompact, func(_ context.Context, in extensions.HookInput, _ extensions.Recorder) (extensions.HookResult, error) {
+				committedCheckpoint = c.val("SELECT COALESCE(current_checkpoint_id,'') FROM threads WHERE thread_id=?", thread)
+				if committedCheckpoint == "" || c.val("SELECT COUNT(*) FROM checkpoints WHERE checkpoint_id=?", committedCheckpoint) != "1" {
+					return extensions.HookResult{}, errors.New("the checkpoint was not stored before after_compact")
+				}
+				if tc.stopAfterCommit {
+					_, control := c.revisions(thread)
+					if got := c.interrupt(in.RunID, control, "manual.postcommit.cancel.000001").Code; got != "CANCEL_REQUESTED" {
+						return extensions.HookResult{}, errors.New("the late stop was not recorded")
+					}
+				} else {
+					time.Sleep(1100 * time.Millisecond)
+				}
+				return extensions.Continue(), nil
+			})
+			hs := hookSetup{extra: []extensions.Named{lateStop}, hard: 5 * time.Second}
+			c, _ = manualScenarioWith(t, map[string]harnesstest.Reply{modelport.StageSummary: harnesstest.Final(goodSummary)}, hookRigBuild(hs))
+			thread = c.val("SELECT thread_id FROM threads")
+			if tc.deadlineSeconds > 0 {
+				// The Service retains this Deployment pointer; lowering the host cap after the
+				// setup Run gives just the compaction Run a short real deadline.
+				c.dep.Config.Limits.DeadlineSeconds = tc.deadlineSeconds
+			}
+			acc := c.compact(thread, "manual.postcommit."+strings.ReplaceAll(tc.name, " ", "."), false)
+			res := c.waitReceipt(acc.ReceiptID)
+			if res.Status != "executed" || res.Outcome == nil || *res.Outcome != "NormalCompacted" || res.CheckpointID == nil || *res.CheckpointID != committedCheckpoint {
+				t.Fatalf("the committed checkpoint remains the compaction result: %+v checkpoint=%q", res, committedCheckpoint)
+			}
+			run := decode[protocol.RunInfo](t, c.mustCall("run/get", protocol.RunGetInput{RunID: c.systemRun()}))
+			if !run.Terminal || run.Result.Status != "completed" || run.Result.Code != "COMPACTION_COMMITTED" || run.Result.FinalMessageID != nil || run.Result.FinalText != "" ||
+				run.Result.LastCheckpointID == nil || *run.Result.LastCheckpointID != committedCheckpoint || c.val("SELECT current_checkpoint_id FROM threads WHERE thread_id=?", thread) != committedCheckpoint {
+				t.Fatalf("the system Run retains its committed checkpoint result: %+v", run.Result)
+			}
+		})
+	}
 }
 
 // TestARetriedManualCompactionIsAnsweredByTheFirstReceiptWhateverMovedSince is A07 through the

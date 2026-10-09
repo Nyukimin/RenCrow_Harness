@@ -166,7 +166,7 @@ func finishRun(ctx context.Context, svc *service.Service, tail *eventTail, wake 
 	if *emitErr != nil {
 		return failure("the events could not be written")
 	}
-	fmt.Fprintf(stderr, "run %s %s %s (verification: %s)\n", res.RunID, res.Status, res.Code, res.Verification.Status)
+	fmt.Fprintf(stderr, "run %s %s %s (verification: %s)\n", res.RunID, res.Status, res.Code, verificationSummary(res.Verification))
 	if code := exitCodeOfStatus(res.Status); code != ExitOK {
 		return &exitError{code: code, msg: fmt.Sprintf("the run ended %s (%s)", res.Status, res.Code)}
 	}

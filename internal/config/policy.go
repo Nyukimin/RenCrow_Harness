@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/Nyukimin/RenCrow_Harness/internal/canon"
 	"github.com/Nyukimin/RenCrow_Harness/internal/intake"
+	"github.com/Nyukimin/RenCrow_Harness/internal/strictjson"
 	"github.com/Nyukimin/RenCrow_Harness/pkg/protocol"
 )
 
@@ -34,14 +37,15 @@ var knownModes = map[string]bool{
 
 // Policy is one entry of the policy registry (schemas/policy_registry.schema.json).
 type Policy struct {
-	ID              string          `json:"id"`
-	AllowedModes    []string        `json:"allowed_modes"`
-	Tools           []string        `json:"tools"`
-	ReadPrefixes    []string        `json:"read_prefixes"`
-	WritePrefixes   []string        `json:"write_prefixes"`
-	ProcessProfiles []string        `json:"process_profiles"`
-	EnvProfiles     []string        `json:"env_profiles"`
-	Limits          protocol.Limits `json:"limits"`
+	ID              string            `json:"id"`
+	AllowedModes    []string          `json:"allowed_modes"`
+	Tools           []string          `json:"tools"`
+	ReadPrefixes    []string          `json:"read_prefixes"`
+	WritePrefixes   []string          `json:"write_prefixes"`
+	ProcessProfiles []string          `json:"process_profiles"`
+	EnvProfiles     []string          `json:"env_profiles"`
+	Limits          protocol.Limits   `json:"limits"`
+	Verification    *VerificationPlan `json:"verification,omitempty"`
 }
 
 // registryFile is the registry document.
@@ -148,7 +152,52 @@ func (p Policy) validate() error {
 	if err := checkSet("process_profiles", p.ProcessProfiles, nil); err != nil {
 		return err
 	}
-	return checkSet("env_profiles", p.EnvProfiles, nil)
+	if err := checkSet("env_profiles", p.EnvProfiles, nil); err != nil {
+		return err
+	}
+	if p.Verification == nil {
+		return nil
+	}
+	v := p.Verification
+	if v.FormatVersion != VerificationPlanVersion || v.ProcessProfileRef == "" || v.Executable == "" ||
+		!filepath.IsAbs(v.Executable) || strings.ContainsRune(v.Executable, 0) || v.Cwd == "" || len(v.Cwd) > 4096 ||
+		v.EnvProfileRef == "" || v.TimeoutSeconds < 1 || v.TimeoutSeconds > 86400 || v.PassCondition != VerificationExitZero {
+		return fmt.Errorf("%w: verification plan is not valid", ErrInvalid)
+	}
+	if len(v.Argv) > 256 {
+		return fmt.Errorf("%w: verification argv is too long", ErrInvalid)
+	}
+	for _, arg := range v.Argv {
+		if len(arg) > 4096 || strings.ContainsRune(arg, 0) {
+			return fmt.Errorf("%w: verification argv has an invalid argument", ErrInvalid)
+		}
+	}
+	if err := ValidatePrefix(v.Cwd); err != nil {
+		return err
+	}
+	if !slices.Contains(p.AllowedModes, protocol.ModeTrustedHost) || !slices.Contains(p.Tools, "process.exec") ||
+		!slices.Contains(p.ProcessProfiles, v.ProcessProfileRef) || !slices.Contains(p.EnvProfiles, v.EnvProfileRef) {
+		return fmt.Errorf("%w: verification plan is outside the policy's process and environment grants", ErrInvalid)
+	}
+	if !policyAllowsCwd(p, v.Cwd) {
+		return fmt.Errorf("%w: verification working directory is outside the policy's read and write prefixes", ErrInvalid)
+	}
+	if _, err := encodeVerificationPlan(*v); err != nil {
+		return fmt.Errorf("%w: verification plan cannot be canonicalized", ErrInvalid)
+	}
+	return nil
+}
+
+func policyAllowsCwd(p Policy, cwd string) bool {
+	covered := func(prefixes []string) bool {
+		for _, prefix := range prefixes {
+			if prefix == "." || cwd == prefix || strings.HasPrefix(cwd, prefix+"/") {
+				return true
+			}
+		}
+		return false
+	}
+	return covered(p.ReadPrefixes) || covered(p.WritePrefixes)
 }
 
 // EffectivePolicyInput is everything the policy revision covers: the registry
@@ -212,6 +261,19 @@ func EffectivePolicyRevision(in EffectivePolicyInput) (string, error) {
 		"env_profiles":     envs,
 		"workspace_root":   in.WorkspaceRoot,
 		"mode":             in.Mode,
+	}
+	// Keep original effective-policy bytes and revisions unchanged for policies
+	// with no verifier. The optional plan participates only when configured.
+	if p.Verification != nil {
+		canonical, err := encodeVerificationPlan(*p.Verification)
+		if err != nil {
+			return "", fmt.Errorf("%w: verification plan: %w", ErrInvalid, err)
+		}
+		plan, err := strictjson.Decode(canonical)
+		if err != nil {
+			return "", fmt.Errorf("%w: verification plan: %w", ErrInvalid, err)
+		}
+		value["policy"].(map[string]any)["verification"] = plan
 	}
 	rev, err := canon.D("rencrow-effective-policy/v1", value)
 	if err != nil {
@@ -355,12 +417,13 @@ func (d *Deployment) PolicyRevision(policyRef, workspaceRoot, mode string) (stri
 // profile definitions it grants, and the revision that covers them all. The Run
 // freezes it; nothing re-reads the registry afterwards.
 type EffectivePolicy struct {
-	Policy          Policy
-	ProcessProfiles []ProcessProfile
-	EnvProfiles     []EnvProfile
-	WorkspaceRoot   string
-	Mode            string
-	Revision        string
+	Policy                       Policy
+	ProcessProfiles              []ProcessProfile
+	EnvProfiles                  []EnvProfile
+	WorkspaceRoot                string
+	Mode                         string
+	Revision                     string
+	VerificationCriteriaRevision string
 }
 
 // EffectivePolicy resolves the policy, the mode and the revision, with the same checks
@@ -381,6 +444,11 @@ func (d *Deployment) EffectivePolicy(policyRef, workspaceRoot, mode string) (Eff
 	out.Policy.WritePrefixes = slices.Clone(p.WritePrefixes)
 	out.Policy.ProcessProfiles = slices.Clone(p.ProcessProfiles)
 	out.Policy.EnvProfiles = slices.Clone(p.EnvProfiles)
+	if p.Verification != nil {
+		v := *p.Verification
+		v.Argv = slices.Clone(p.Verification.Argv)
+		out.Policy.Verification = &v
+	}
 	for _, n := range p.ProcessProfiles {
 		pp := d.process[n]
 		pp.ArgvPrefix = slices.Clone(pp.ArgvPrefix)
@@ -395,5 +463,87 @@ func (d *Deployment) EffectivePolicy(policyRef, workspaceRoot, mode string) (Eff
 		e.Values = vals
 		out.EnvProfiles = append(out.EnvProfiles, e)
 	}
+	if p.Verification != nil && mode == protocol.ModeTrustedHost {
+		out.VerificationCriteriaRevision, err = VerificationCriteriaRevision(out)
+		if err != nil {
+			return EffectivePolicy{}, err
+		}
+	}
 	return out, nil
+}
+
+// VerificationCriteriaRevision hashes the plan with the exact resolved process
+// and environment profiles, workspace cwd, policy selection, mode, and frozen
+// effective policy revision. The process route still resolves and checks cwd at
+// execution time; its no-symlink workspace walk yields this same absolute path.
+func VerificationCriteriaRevision(ep EffectivePolicy) (string, error) {
+	plan := ep.Policy.Verification
+	if plan == nil {
+		return "", fmt.Errorf("%w: verification plan is absent", ErrInvalid)
+	}
+	var processProfile *ProcessProfile
+	for i := range ep.ProcessProfiles {
+		if ep.ProcessProfiles[i].Name == plan.ProcessProfileRef {
+			if processProfile != nil {
+				return "", fmt.Errorf("%w: verification process profile is ambiguous", ErrInvalid)
+			}
+			processProfile = &ep.ProcessProfiles[i]
+		}
+	}
+	var envProfile *EnvProfile
+	for i := range ep.EnvProfiles {
+		if ep.EnvProfiles[i].Name == plan.EnvProfileRef {
+			if envProfile != nil {
+				return "", fmt.Errorf("%w: verification environment profile is ambiguous", ErrInvalid)
+			}
+			envProfile = &ep.EnvProfiles[i]
+		}
+	}
+	if processProfile == nil || envProfile == nil || ep.WorkspaceRoot == "" || ep.Policy.ID == "" || ep.Revision == "" {
+		return "", fmt.Errorf("%w: effective verification inputs are incomplete", ErrInvalid)
+	}
+	if processProfile.Executable != plan.Executable || processProfile.IsShell || len(plan.Argv) < len(processProfile.ArgvPrefix) ||
+		!slices.Equal(plan.Argv[:len(processProfile.ArgvPrefix)], processProfile.ArgvPrefix) ||
+		!slices.Contains(ep.Policy.AllowedModes, protocol.ModeTrustedHost) ||
+		!slices.Contains(ep.Policy.Tools, "process.exec") ||
+		!slices.Contains(ep.Policy.ProcessProfiles, processProfile.Name) ||
+		!slices.Contains(ep.Policy.EnvProfiles, envProfile.Name) || ep.Mode != protocol.ModeTrustedHost {
+		return "", fmt.Errorf("%w: resolved verification inputs do not match the policy authority", ErrInvalid)
+	}
+	planBytes, err := encodeVerificationPlan(*plan)
+	if err != nil {
+		return "", fmt.Errorf("%w: verification plan cannot be canonicalized", ErrInvalid)
+	}
+	planValue, err := strictjson.Decode(planBytes)
+	if err != nil {
+		return "", fmt.Errorf("%w: verification plan cannot be decoded canonically", ErrInvalid)
+	}
+	resolvedCwd := filepath.Clean(filepath.Join(ep.WorkspaceRoot, filepath.FromSlash(plan.Cwd)))
+	argvPrefix := make([]any, len(processProfile.ArgvPrefix))
+	for i, arg := range processProfile.ArgvPrefix {
+		argvPrefix[i] = arg
+	}
+	envValues := make(map[string]any, len(envProfile.Values))
+	for key, value := range envProfile.Values {
+		envValues[key] = value
+	}
+	canonical, err := canon.Encode(map[string]any{
+		"format_version": "rencrow-verification-criteria/v1",
+		"plan":           planValue,
+		"process_profile": map[string]any{
+			"name": processProfile.Name, "executable": processProfile.Executable,
+			"is_shell": processProfile.IsShell, "argv_prefix": argvPrefix,
+		},
+		"env_profile":     map[string]any{"name": envProfile.Name, "values": envValues},
+		"workspace_root":  ep.WorkspaceRoot,
+		"resolved_cwd":    resolvedCwd,
+		"policy_ref":      ep.Policy.ID,
+		"mode":            ep.Mode,
+		"policy_revision": ep.Revision,
+	})
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(canonical)
+	return hex.EncodeToString(sum[:]), nil
 }

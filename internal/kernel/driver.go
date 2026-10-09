@@ -217,13 +217,15 @@ type runState struct {
 	unresolvedModel []string
 
 	// The Tool exchange of the response being acted on.
-	pol           *tools.RunPolicy
-	run           *tools.RunTools
-	wsLock        *oslock.Lock
-	validated     []tools.Call
-	responseID    string
-	assistantText string
-	batch         *tools.Batch
+	pol                          *tools.RunPolicy
+	run                          *tools.RunTools
+	wsLock                       *oslock.Lock
+	validated                    []tools.Call
+	responseID                   string
+	assistantText                string
+	batch                        *tools.Batch
+	verification                 *protocol.Verification
+	verificationUnresolvedAction string
 }
 
 // retryState is what the driver keeps of a scheduled retry until it is sent.
@@ -463,7 +465,7 @@ func (d *Driver) execute(ctx, runCtx context.Context, rs *runState, s State, eff
 	case EffCommitCheckpoint:
 		return d.commitCheckpoint(ctx, rs)
 	case EffPersistResult:
-		return d.persist(ctx, rs, s.Pending)
+		return d.persist(ctx, runCtx, rs, s.Pending)
 	}
 	d.o.Diag("the kernel asked for an effect this driver does not know")
 	return stepResult{abandon: true}
@@ -1139,15 +1141,12 @@ func (d *Driver) validateFinal(rs *runState) stepResult {
 
 // persist ends the Run: the run_terminal hook is called, the result is built from the outcome
 // and the records of the Run (F20), and stored with run.terminal in one transaction.
-func (d *Driver) persist(ctx context.Context, rs *runState, pending *Outcome) stepResult {
+func (d *Driver) persist(ctx, runCtx context.Context, rs *runState, pending *Outcome) stepResult {
 	if pending == nil {
 		d.o.Diag("a result was asked for without an outcome")
 		return stepResult{abandon: true}
 	}
 	dbctx := d.dbCtx(ctx)
-	// Nothing more changes the workspace in this Run: its lock goes before the Thread is
-	// freed, so a Run that is admitted the moment this one ends does not meet it.
-	rs.release()
 	var unresolvedTools []string
 	if rs.batch != nil {
 		// A Run that ends in the middle of a Tool exchange still tells its Thread what was
@@ -1163,6 +1162,35 @@ func (d *Driver) persist(ctx context.Context, rs *runState, pending *Outcome) st
 			d.o.Diag("a Tool exchange could not be applied before the run ended: %s", describe(err))
 		}
 		unresolvedTools = slices.Clone(rs.batch.Unresolved)
+	}
+	if !rs.rec.System && rs.pol != nil {
+		if _, revision, configured := rs.pol.VerificationPlan(); configured && revision != "" {
+			rs.verification = &protocol.Verification{Status: "not_run", EvidenceIDs: []string{}, CriteriaRevision: protocol.Str(revision)}
+		}
+	}
+	if pending.Status == StatusCompleted && !rs.rec.System && rs.run != nil {
+		execution, err := rs.run.Verify(runCtx)
+		if err != nil {
+			d.o.Diag("the host verification outcome could not be recorded")
+			return stepResult{abandon: true}
+		}
+		d.o.Publish(execution.Events)
+		rs.verification = &execution.Result
+		rs.verificationUnresolvedAction = execution.UnresolvedActionID
+		if execution.UnresolvedActionID != "" {
+			// A process whose outcome is unknown cannot leave the Run completed: the
+			// accepted model text stays in its response Evidence, while the terminal
+			// result blocks and names the unresolved verification Action.
+			*pending = ClassifyFailure(Failure{Code: CodeEffectOutcomeUnknown})
+		}
+	}
+	if pending.Status == StatusCompleted && !rs.rec.System {
+		if stopErr := runCtx.Err(); stopErr != nil {
+			// The verifier is work inside this user Run. If its deadline or driver context
+			// stopped the work, a known failed process result does not make the Run
+			// completed; only a genuinely unresolved process outcome takes precedence.
+			*pending = ClassifyFailure(Failure{Code: stopCode(runCtx, stopErr)})
+		}
 	}
 	// run_terminal: the Run's end is decided and is about to be stored. The hook is called
 	// before the terminal transaction because that is the last moment the Run can still write
@@ -1184,10 +1212,14 @@ func (d *Driver) persist(ctx context.Context, rs *runState, pending *Outcome) st
 	}
 	in := sqlite.TerminalInput{ResultEvidenceID: identity.NewEvidenceID().String()}
 	facts := ResultFacts{RunID: rs.rec.RunID, TaskID: rs.rec.TaskID, Outcome: *pending, EvidenceIDs: evidence, LastCheckpointID: rs.lastCheckpointID, System: rs.rec.System}
+	facts.Verification = rs.verification
 	if pending.UnresolvedModelAction {
 		facts.UnresolvedActionIDs = slices.Clone(rs.unresolvedModel)
 	}
 	facts.UnresolvedActionIDs = append(facts.UnresolvedActionIDs, unresolvedTools...)
+	if rs.verificationUnresolvedAction != "" {
+		facts.UnresolvedActionIDs = append(facts.UnresolvedActionIDs, rs.verificationUnresolvedAction)
+	}
 	if pending.Status == StatusCompleted && !rs.rec.System {
 		msg := identity.NewMessageID().String()
 		in.FinalText, in.FinalEvidenceID = rs.finalText, identity.NewEvidenceID().String()
@@ -1204,15 +1236,21 @@ func (d *Driver) persist(ctx context.Context, rs *runState, pending *Outcome) st
 		in.CompactResult = d.compactResultOfRun(rs, *pending)
 	}
 	events, err := d.o.Store.PersistTerminal(dbctx, rs.fence, in)
-	if errors.Is(err, sqlite.ErrControlChanged) && pending.Status == StatusCompleted {
-		// A stop was recorded before the final answer could be adopted: the Run ends as
-		// the stopped Run it is, and the answer is not adopted (it stays as the Evidence of
-		// the response it came in). What the Run did is as recorded; only its end differs.
-		stopped := ClassifyFailure(Failure{Code: modelport.CodeCancelled})
-		if d.hooksOn() {
-			d.o.Diag("a run ended as cancelled after its run_terminal hook was told it would end as %s", pending.Code)
+	if (errors.Is(err, sqlite.ErrControlChanged) || errors.Is(err, sqlite.ErrDeadlinePassed)) && pending.Status == StatusCompleted {
+		// A stop or deadline arrived before the final answer could be adopted: the Run
+		// ends as the stopped Run it is, and the answer remains response Evidence only.
+		stopCode := modelport.CodeCancelled
+		if errors.Is(err, sqlite.ErrDeadlinePassed) {
+			stopCode = CodeDeadlineExceeded
 		}
-		facts := ResultFacts{RunID: rs.rec.RunID, TaskID: rs.rec.TaskID, Outcome: stopped, EvidenceIDs: evidence, UnresolvedActionIDs: slices.Clone(unresolvedTools)}
+		stopped := ClassifyFailure(Failure{Code: stopCode})
+		if d.hooksOn() {
+			d.o.Diag("a run ended as %s after its run_terminal hook was told it would end as %s", stopped.Code, pending.Code)
+		}
+		facts := ResultFacts{RunID: rs.rec.RunID, TaskID: rs.rec.TaskID, Outcome: stopped, EvidenceIDs: evidence, UnresolvedActionIDs: slices.Clone(unresolvedTools), Verification: rs.verification}
+		if rs.verificationUnresolvedAction != "" {
+			facts.UnresolvedActionIDs = append(facts.UnresolvedActionIDs, rs.verificationUnresolvedAction)
+		}
 		result, rerr := BuildRunResult(facts)
 		if rerr != nil {
 			d.o.Diag("a result could not be built from the run's records")
@@ -1225,6 +1263,9 @@ func (d *Driver) persist(ctx context.Context, rs *runState, pending *Outcome) st
 		return stepResult{abandon: true}
 	}
 	d.o.Publish(events)
+	// Keep the workspace lock through verification and the terminal commit so another
+	// Harness Run cannot change the checked state between the process result and receipt.
+	rs.release()
 	return stepResult{ev: Event{Kind: EvPersisted}}
 }
 
@@ -1232,7 +1273,7 @@ func (d *Driver) persist(ctx context.Context, rs *runState, pending *Outcome) st
 // with the Evidence and unresolved actions it left.
 func settle(st sqlite.StaleRun) (sqlite.TerminalInput, error) {
 	o := OrphanOutcomeCancelled(len(st.Unresolved), len(st.UnresolvedTools), st.CancelRequested, st.Now, st.DeadlineAt)
-	facts := ResultFacts{RunID: st.RunID, TaskID: st.TaskID, Outcome: o, EvidenceIDs: st.EvidenceIDs, LastCheckpointID: st.LastCheckpointID}
+	facts := ResultFacts{RunID: st.RunID, TaskID: st.TaskID, Outcome: o, EvidenceIDs: st.EvidenceIDs, LastCheckpointID: st.LastCheckpointID, Verification: st.Verification}
 	for _, u := range st.Unresolved {
 		facts.UnresolvedActionIDs = append(facts.UnresolvedActionIDs, u.ActionID)
 	}
@@ -1252,17 +1293,22 @@ func settle(st sqlite.StaleRun) (sqlite.TerminalInput, error) {
 	return in, nil
 }
 
-// SettleUnknownGeneration is the end of a Run that is admitted while a generation of its
-// Task has an unknown end (a run/resume of such a Task; see sqlite.ResumeAdmission): the
-// classification of an unknown generation, which is the same whichever Run the generation
-// was in: blocked, with MODEL_GENERATION_OUTCOME_UNKNOWN, resumable, and the unknown
-// generations' Actions listed as unresolved. The Run generates nothing.
+// SettleUnknownGeneration is the end of a Run admitted while its Task has an unknown model
+// generation or fixed verification process (see sqlite.ResumeAdmission). It preserves the
+// corresponding existing blocked classification, unresolved Actions, and verifier result.
+// The new Run generates nothing and never resends the verification process.
 func SettleUnknownGeneration(st sqlite.StaleRun) (sqlite.TerminalInput, error) {
-	o := ClassifyFailure(Failure{Code: modelport.CodeOutcomeUnknown, GenerationState: modelport.StateUnknown})
-	facts := ResultFacts{RunID: st.RunID, TaskID: st.TaskID, Outcome: o, EvidenceIDs: st.EvidenceIDs, LastCheckpointID: st.LastCheckpointID}
+	failure := Failure{Code: CodeEffectOutcomeUnknown}
+	if len(st.Unresolved) > 0 {
+		failure = Failure{Code: modelport.CodeOutcomeUnknown, GenerationState: modelport.StateUnknown}
+	}
+	o := ClassifyFailure(failure)
+	facts := ResultFacts{RunID: st.RunID, TaskID: st.TaskID, Outcome: o, EvidenceIDs: st.EvidenceIDs, LastCheckpointID: st.LastCheckpointID,
+		Verification: st.Verification}
 	for _, u := range st.Unresolved {
 		facts.UnresolvedActionIDs = append(facts.UnresolvedActionIDs, u.ActionID)
 	}
+	facts.UnresolvedActionIDs = append(facts.UnresolvedActionIDs, st.UnresolvedTools...)
 	r, err := BuildRunResult(facts)
 	if err != nil {
 		return sqlite.TerminalInput{}, fmt.Errorf("kernel: the result of a run blocked by an unknown generation: %w", err)

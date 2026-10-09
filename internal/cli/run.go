@@ -46,6 +46,20 @@ func exitCodeOfStatus(status string) int {
 	return ExitFailure
 }
 
+// verificationSummary is the human-readable projection of the stored Verification
+// contract. The criteria digest distinguishes an owner-configured check; its evidence
+// IDs are the sealed captures named by RunResult.
+func verificationSummary(v protocol.Verification) string {
+	if v.CriteriaRevision == nil {
+		return v.Status
+	}
+	evidence := strings.Join(v.EvidenceIDs, ",")
+	if evidence == "" {
+		evidence = "none"
+	}
+	return fmt.Sprintf("%s criteria_revision=%s evidence_ids=%s", v.Status, *v.CriteriaRevision, evidence)
+}
+
 // orphanedAfter is how long a Run that is not over and that no driver of this process holds is
 // waited for: another process may be driving it, and then it is its own to end, and this command
 // says so rather than wait without a bound.

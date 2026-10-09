@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/Nyukimin/RenCrow_Harness/internal/identity"
@@ -25,13 +26,11 @@ type ResumeAdmission struct {
 	// Attempt of the Task. It was made before the transaction: an OS call never happens
 	// inside one. An unknown Attempt it has no verdict for is recorded as unchecked.
 	Reconciled map[string]string
-	// EndsOnUnknownGeneration decides the end of a Run that is admitted while a generation
-	// of its Task has an unknown end: such a Run is never driven, because no generation
-	// may start while an earlier one is not known to have ended and nothing here can ask
-	// the model side. It is called inside the transaction with the Run as it stands (its
-	// Unresolved are the Task's unknown generations) and gives the result the Run is
-	// ended with. Without it a Task with an unknown generation cannot be resumed at all:
-	// the admission fails and writes nothing.
+	// EndsOnUnknownGeneration decides the end of a Run admitted while its Task has an
+	// unknown model generation or fixed verification process. Such a Run is never driven:
+	// the generation cannot be queried again and an unknown verifier cannot be adopted or
+	// resent. It is called inside the transaction with unresolved actions and their
+	// preserved verifier result, if any. Without it those unresolved effects refuse resume.
 	EndsOnUnknownGeneration func(StaleRun) (TerminalInput, error)
 	// Standing is what the Service verified, before the admission, about the checkpoint the
 	// Task's Thread stands on (kernel.VerifyStanding): its ID, nil for none. The admission
@@ -55,8 +54,8 @@ type ResumeOutcome struct {
 	// Events are the events this call committed (run.started of the new Run, and its
 	// run.terminal when Blocked); a replay commits none.
 	Events []protocol.Event
-	// Blocked: the new Run was admitted already ended, blocked by an unknown generation of
-	// its Task (see ResumeAdmission.EndsOnUnknownGeneration). Nothing is to be driven.
+	// Blocked: the new Run was admitted already ended because its Task has an unknown
+	// generation or fixed verification process. Nothing is to be driven.
 	Blocked bool
 }
 
@@ -260,7 +259,7 @@ func (s *Store) PreflightResume(ctx context.Context, adm ResumeAdmission, params
 func unknownToolAttempts(ctx context.Context, q queryer, taskID string) ([]ToolAttemptRef, error) {
 	rows, err := q.QueryContext(ctx, `SELECT ac.run_id, a.action_id, a.attempt_id, ac.name, a.state, COALESCE(a.host_incarnation,''), COALESCE(a.process_token,'')
 		FROM attempts a JOIN actions ac ON ac.action_id=a.action_id JOIN runs r ON r.run_id=ac.run_id
-		WHERE r.task_id=? AND ac.kind='tool' AND a.state=? ORDER BY a.started_at, a.attempt_id`, taskID, ToolUnknown)
+		WHERE r.task_id=? AND ac.kind IN ('tool','verification') AND a.state=? ORDER BY a.started_at, a.attempt_id`, taskID, ToolUnknown)
 	if err != nil {
 		return nil, fmt.Errorf("sqlite: list unknown tool attempts: %w", mapSQLiteError(err))
 	}
@@ -274,6 +273,79 @@ func unknownToolAttempts(ctx context.Context, q queryer, taskID string) ([]ToolA
 		out = append(out, r)
 	}
 	return out, rows.Err()
+}
+
+// unknownVerificationResult returns the Task's unresolved fixed verifier Actions and
+// the latest original RunResult they produced. A host process reconciliation can stop
+// a leftover process, but it cannot resolve the verification criterion or create new
+// passing Evidence.
+func unknownVerificationResult(ctx context.Context, q queryer, taskID string) ([]string, *protocol.Verification, []string, error) {
+	rows, err := q.QueryContext(ctx, `SELECT ac.run_id,ac.action_id,a.attempt_id,a.result_json,ac.args_bytes FROM attempts a JOIN actions ac ON ac.action_id=a.action_id JOIN runs r ON r.run_id=ac.run_id
+		WHERE r.task_id=? AND ac.kind='verification' AND a.state=? ORDER BY a.started_at,a.attempt_id`, taskID, ToolUnknown)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("sqlite: list unknown verifications: %w", mapSQLiteError(err))
+	}
+	type unresolvedVerification struct {
+		runID, actionID, attemptID string
+		resultJSON, argsBytes      []byte
+	}
+	var unresolved []unresolvedVerification
+	for rows.Next() {
+		var item unresolvedVerification
+		if err := rows.Scan(&item.runID, &item.actionID, &item.attemptID, &item.resultJSON, &item.argsBytes); err != nil {
+			_ = rows.Close()
+			return nil, nil, nil, err
+		}
+		unresolved = append(unresolved, item)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return nil, nil, nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, nil, nil, err
+	}
+	if len(unresolved) == 0 {
+		return nil, nil, nil, nil
+	}
+	latest := unresolved[len(unresolved)-1]
+	var record verificationAttemptRecord
+	var actionArgs struct {
+		CriteriaRevision string `json:"criteria_revision"`
+	}
+	if err := decodeVerificationRecord(latest.resultJSON, &record); err != nil || record.Status != "unknown" || !isSHA256(record.CriteriaRevision) {
+		return nil, nil, nil, protocol.NewError(protocol.CodeIntegrityBlocked, "an unresolved verification attempt has invalid criteria evidence").Wrap(err)
+	}
+	if err := decodeVerificationRecord(latest.argsBytes, &actionArgs); err != nil || actionArgs.CriteriaRevision != record.CriteriaRevision {
+		return nil, nil, nil, protocol.NewError(protocol.CodeIntegrityBlocked, "an unresolved verification Action does not match its criteria evidence").Wrap(err)
+	}
+	var raw []byte
+	if err := q.QueryRowContext(ctx, `SELECT result_json FROM runs WHERE run_id=?`, latest.runID).Scan(&raw); err != nil {
+		return nil, nil, nil, fmt.Errorf("sqlite: read unresolved verification result: %w", mapSQLiteError(err))
+	}
+	result, err := protocol.Decode[protocol.RunResult](raw)
+	if err != nil || result.Verification.Status != "unknown" || result.Verification.CriteriaRevision == nil ||
+		*result.Verification.CriteriaRevision != record.CriteriaRevision || !slices.Contains(result.UnresolvedActionIDs, latest.actionID) {
+		return nil, nil, nil, protocol.NewError(protocol.CodeIntegrityBlocked, "an unresolved verification does not have its original result and Evidence").Wrap(err)
+	}
+	verificationEvidence, err := verificationEvidenceIDs(ctx, q, latest.runID, latest.attemptID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if !slices.Equal(result.Verification.EvidenceIDs, verificationEvidence) {
+		return nil, nil, nil, protocol.NewError(protocol.CodeIntegrityBlocked, "an unresolved verification result does not match its Action Evidence")
+	}
+	for _, evidenceID := range verificationEvidence {
+		if !slices.Contains(result.EvidenceIDs, evidenceID) {
+			return nil, nil, nil, protocol.NewError(protocol.CodeIntegrityBlocked, "an unresolved verification Evidence is absent from its RunResult")
+		}
+	}
+	verification := result.Verification
+	actionIDs := make([]string, len(unresolved))
+	for i := range unresolved {
+		actionIDs[i] = unresolved[i].actionID
+	}
+	return actionIDs, &verification, slices.Clone(verificationEvidence), nil
 }
 
 // unknownModelAttempts lists the generation Attempts of the Task's Runs that ended unknown.
@@ -430,15 +502,19 @@ func resumeTx(ctx context.Context, tx *sql.Tx, now time.Time, adm ResumeAdmissio
 		return ResumeOutcome{}, err
 	}
 
-	// A generation whose end is unknown blocks the Run before it exists: without a decision
-	// to end it, nothing is written.
+	// An unknown generation or fixed verification process blocks this Task before any new
+	// Run can be driven. A verifier's process being gone does not prove its criterion.
 	unknownGenerations, _, err := unknownModelAttempts(ctx, tx, in.TaskID)
 	if err != nil {
 		return ResumeOutcome{}, err
 	}
-	blocked := len(unknownGenerations) > 0
+	unknownVerifications, priorVerification, verificationEvidence, err := unknownVerificationResult(ctx, tx, in.TaskID)
+	if err != nil {
+		return ResumeOutcome{}, err
+	}
+	blocked := len(unknownGenerations) > 0 || len(unknownVerifications) > 0
 	if blocked && adm.EndsOnUnknownGeneration == nil {
-		return ResumeOutcome{}, protocol.NewError(protocol.CodeInternal, "a task with an unknown generation cannot be resumed here")
+		return ResumeOutcome{}, protocol.NewError(protocol.CodeInternal, "a task with an unresolved effect cannot be resumed here")
 	}
 
 	// All checks passed. From here on only effects.
@@ -509,8 +585,9 @@ func resumeTx(ctx context.Context, tx *sql.Tx, now time.Time, adm ResumeAdmissio
 		if err != nil {
 			return ResumeOutcome{}, err
 		}
+		evidence = append(evidence, verificationEvidence...)
 		in2, err := adm.EndsOnUnknownGeneration(StaleRun{RunID: runID, TaskID: in.TaskID, Phase: "Admitting", Now: now, DeadlineAt: run.deadline,
-			Unresolved: unknownGenerations, EvidenceIDs: evidence, Limits: run.limits})
+			Unresolved: unknownGenerations, UnresolvedTools: unknownVerifications, Verification: priorVerification, EvidenceIDs: evidence, Limits: run.limits})
 		if err != nil {
 			return ResumeOutcome{}, err
 		}

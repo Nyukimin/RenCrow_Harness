@@ -215,25 +215,9 @@ func (r *RunTools) decide(c Call) (config.ProcessProfile, *toolerr.Error) {
 	case evidenceArgs:
 		return none, nil
 	case execArgs:
-		if r.pol.Mode != protocol.ModeTrustedHost {
-			return none, toolerr.Reject(toolerr.CodeModeUnavailable, "process.exec needs trusted_host mode")
-		}
-		prof, err := process.Resolve(r.pol.processes, a.Executable, a.Argv)
+		prof, _, err := r.authorizeProcess(a)
 		if err != nil {
-			return none, asErr(err)
-		}
-		if !slices.Contains(r.pol.policy.EnvProfiles, a.EnvProfileRef) {
-			return none, toolerr.Reject(toolerr.CodeEnvUnknown, "the environment profile is not one the policy allows")
-		}
-		if _, ok := r.pol.envs[a.EnvProfileRef]; !ok {
-			return none, toolerr.Reject(toolerr.CodeEnvUnknown, "the environment profile is not defined")
-		}
-		if _, err := files.Normalize(a.Cwd); err != nil {
-			return none, asErr(err)
-		}
-		segs, _ := files.Normalize(a.Cwd)
-		if !sc.Allows(segs, files.Read) && !sc.Allows(segs, files.Write) {
-			return none, toolerr.Reject(toolerr.CodePathOutside, "the directory is outside what the policy allows")
+			return none, err
 		}
 		return prof, nil
 	}
@@ -698,11 +682,11 @@ type execResult struct {
 // captured in chunks under the Run's capture limit, and the process tree stopped at the
 // timeout, the capture limit or the Run's end.
 func (r *RunTools) execProcess(ctx context.Context, cs *CallState, a execArgs) outcome {
-	prof, err := process.Resolve(r.pol.processes, a.Executable, a.Argv)
-	if err != nil || prof.Name != cs.profile.Name {
+	prof, envProfile, authErr := r.authorizeProcess(a)
+	if authErr != nil || prof.Name != cs.profile.Name {
 		return failure(toolerr.Reject(toolerr.CodePolicyRejected, "the process profile is not the one the call was bound to"))
 	}
-	env, err := process.BuildEnv(r.pol.envs[a.EnvProfileRef])
+	env, err := process.BuildEnv(envProfile)
 	if err != nil {
 		return failure(err)
 	}
@@ -782,6 +766,45 @@ func (r *RunTools) execProcess(ctx context.Context, cs *CallState, a execArgs) o
 		o.effect = "completed"
 	}
 	return o
+}
+
+// authorizeProcess is the shared process.exec policy decision used by model Tool
+// dispatch and the host-owned verifier. Neither route can select a profile or
+// environment outside the Run's frozen effective policy.
+func (r *RunTools) authorizeProcess(a execArgs) (config.ProcessProfile, config.EnvProfile, *toolerr.Error) {
+	var noProfile config.ProcessProfile
+	var noEnv config.EnvProfile
+	if r.pol == nil || !r.pol.Enabled(ProcessExec) {
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodeToolNotAllowed, "process.exec is not available under this policy")
+	}
+	if r.pol.Mode != protocol.ModeTrustedHost {
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodeModeUnavailable, "process.exec needs trusted_host mode")
+	}
+	profile, err := process.Resolve(r.pol.processes, a.Executable, a.Argv)
+	if err != nil {
+		if te, ok := toolerr.As(err); ok {
+			return noProfile, noEnv, te
+		}
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodePolicyRejected, "the process request was refused")
+	}
+	if !slices.Contains(r.pol.policy.EnvProfiles, a.EnvProfileRef) {
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodeEnvUnknown, "the environment profile is not one the policy allows")
+	}
+	env, ok := r.pol.envs[a.EnvProfileRef]
+	if !ok {
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodeEnvUnknown, "the environment profile is not defined")
+	}
+	segs, err := files.Normalize(a.Cwd)
+	if err != nil {
+		if te, ok := toolerr.As(err); ok {
+			return noProfile, noEnv, te
+		}
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodePathInvalid, "the process working directory is invalid")
+	}
+	if !r.pol.Scope().Allows(segs, files.Read) && !r.pol.Scope().Allows(segs, files.Write) {
+		return noProfile, noEnv, toolerr.Reject(toolerr.CodePathOutside, "the directory is outside what the policy allows")
+	}
+	return profile, env, nil
 }
 
 // hookInput is what a hook at a point of this call is told: identifiers and revisions only.

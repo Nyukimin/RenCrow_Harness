@@ -853,8 +853,8 @@ func (s *Service) RunResume(ctx context.Context, params []byte) (protocol.Resume
 // is asked about the processes of the Task's unknown Tool calls (they are never run again; one
 // that is still running and cannot be stopped is BUSY, and nothing is written), and only then
 // does the admission's transaction decide, fencing the checkpoint that was verified. A Task
-// with a generation whose end is unknown gets its new Run ended at once, blocked, and
-// never driven: no generation starts while one is unresolved.
+// with an unknown generation or fixed verification outcome gets its new Run ended at once,
+// blocked, and never driven: the model is not asked again and the verifier is never resent.
 func (s *Service) runResume(ctx context.Context, params []byte) (protocol.ResumeResult, []protocol.Event, func(), error) {
 	if s.shuttingDown() {
 		return protocol.ResumeResult{}, nil, nil, errShuttingDown()

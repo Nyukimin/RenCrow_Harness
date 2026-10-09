@@ -94,6 +94,7 @@ commands:
   sessions  list --config ABS                 list the sessions this profile can read
   inspect   --config ABS --run RUN_ID [--json]  show a run
   evidence  --config ABS --id EVIDENCE_ID --start N --end N [--projection text|raw]  print a byte range
+  verification-digest --config ABS --policy-ref REF --workspace ABS --mode trusted_host  print the verifier criteria digest
   compact   --config ABS --thread THREAD_ID [--dry-run] [--idempotency-key KEY]  compact an idle thread (dry-run only counts)
   chat      --config ABS --workspace ABS --binding PROFILE [--mode MODE]  talk to a run, line by line (/help lists the commands)
   exec      --config ABS --workspace ABS --binding PROFILE --input-file ABS [--json] [--mode MODE] [--origin ORIGIN] [--idempotency-key KEY]  one run, no questions
@@ -127,6 +128,8 @@ func Run(ctx context.Context, args []string, in io.Reader, out, errw io.Writer) 
 		err = cmdInspect(ctx, rest, out)
 	case "evidence":
 		err = cmdEvidence(ctx, rest, out, errw)
+	case "verification-digest":
+		err = cmdVerificationDigest(rest, out)
 	case "compact":
 		err = cmdCompact(ctx, rest, out, errw)
 	case "chat":

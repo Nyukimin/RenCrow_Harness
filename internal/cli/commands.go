@@ -195,6 +195,7 @@ func cmdInspect(ctx context.Context, args []string, out io.Writer) *exitError {
 	fmt.Fprintf(out, "run_id: %s\ntask_id: %s\nthread_id: %s\nphase: %s\nterminal: %t\n", info.RunID, info.TaskID, info.ThreadID, info.Phase, info.Terminal)
 	if info.Result != nil {
 		fmt.Fprintf(out, "result: %s %s\n", info.Result.Status, info.Result.Code)
+		fmt.Fprintf(out, "verification: %s\n", verificationSummary(info.Result.Verification))
 	} else {
 		fmt.Fprintf(out, "result: none\n")
 	}

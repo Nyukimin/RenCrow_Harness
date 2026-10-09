@@ -53,6 +53,9 @@ func (s *Store) PersistTerminal(ctx context.Context, f Fence, in TerminalInput) 
 		if run.phase != "PersistingResult" {
 			return ErrPhaseConflict
 		}
+		if in.Result.Status == "completed" && in.Result.FinalMessageID != nil && !now.Before(run.deadline) {
+			return ErrDeadlinePassed
+		}
 		seq := &eventSeq{base: th.eventSeq}
 		ctxRev := th.contextRev
 		var err error
@@ -205,8 +208,11 @@ type StaleRun struct {
 	// UnresolvedTools are the Actions of Tool calls that were dispatched and never
 	// recorded an end: each is unknown now, with its answer applied to the context.
 	UnresolvedTools []string
-	EvidenceIDs     []string
-	Limits          protocol.Limits
+	// Verification is the recorded host verifier outcome, if its Action exists.
+	// A dispatched verifier with no recorded end is closed unknown before this is set.
+	Verification *protocol.Verification
+	EvidenceIDs  []string
+	Limits       protocol.Limits
 	// CancelRequested: a stop of the Run was requested (control.cancel_requested) and the
 	// Run's driver never acted on it.
 	CancelRequested bool
@@ -344,6 +350,14 @@ func (s *Store) terminalizeRuns(ctx context.Context, threadID string, epoch int6
 				events = append(events, evs...)
 				unknownTools = append(unknownTools, unknown...)
 			}
+			verification, unresolvedVerification, verificationEvents, err := reconcileVerificationTx(ctx, tx, now, th, threadID, run, start, seq, reconciled)
+			if err != nil {
+				return err
+			}
+			events = append(events, verificationEvents...)
+			if unresolvedVerification != "" {
+				unknownTools = append(unknownTools, unresolvedVerification)
+			}
 			evidence, err := runEvidenceIDs(ctx, tx, id)
 			if err != nil {
 				return err
@@ -371,7 +385,7 @@ func (s *Store) terminalizeRuns(ctx context.Context, threadID string, epoch int6
 				compaction = kind == "compaction"
 			}
 			in, err := decide(StaleRun{RunID: id, TaskID: run.taskID, Phase: run.phase, Now: now, DeadlineAt: run.deadline, Unresolved: unresolved,
-				UnresolvedTools: unknownTools, EvidenceIDs: evidence, Limits: run.limits, CancelRequested: cancelled, LastCheckpointID: nullStr(lastCheckpoint),
+				UnresolvedTools: unknownTools, Verification: verification, EvidenceIDs: evidence, Limits: run.limits, CancelRequested: cancelled, LastCheckpointID: nullStr(lastCheckpoint),
 				System: start.system, Compaction: compaction, LastCheckpoint: last})
 			if err != nil {
 				return err

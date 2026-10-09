@@ -22,6 +22,16 @@ env_profile_refはconfig.env_profilesのnameへ完全一致。valuesは明示的
 `policy_revision=D("rencrow-effective-policy/v1",{policy,process_profiles,env_profiles,workspace_root,mode})`。
 process/env配列はnameのUTF-8順、policyの集合配列は重複を拒否してUTF-8順。prefix/Tool/許可profileの順序に権限優先順位を持たせない。Run中にファイルを再読して権限を緩めず、変更は明示した再開/制御更新にする。
 
+### 1.1 固定verification plan
+
+Policyのoptional field `verification`は`rencrow-verification-plan/v1`の単一固定process checkである。objectは`format_version`、`process_profile_ref`、`executable`、完全な`argv`、workspace相対`cwd`、`env_profile_ref`、`timeout_seconds`、`pass_condition`を必須とし、余分なfieldを許さない。現版は`pass_condition=exit_zero`だけを受理する。planはtrusted_host、`process.exec`、名前付きprocess/env profileのgrantを要求する。executableはnamed profileのpathと一致し、shellではなく、完全なargvが許可profile一件のprefixへ解決しなければならない。cwdはworkspace内でreadまたはwrite prefixに許される必要がある。
+
+設定を読み込んだ`Deployment`がplanと参照先のresolved definitionを保持する。planを含むpolicyでは、その全semantic settingを`policy_revision`へ追加する。planのないpolicyでは既存revision bytesを維持する。Task admission用のowner factは`verification-digest` CLIが出すcriteria revisionで、計算仕様は[BYTE_CONTRACTS §6.1](BYTE_CONTRACTS.md#61-verification-criteria-revision)に固定する。criteriaはplan、実際に解決されるexecutable/argv prefix、environment profileの値、real workspace rootとresolved cwd、policy id、mode、effective policy revisionを束ねる。値そのものはdigestの外へ出さない。
+
+DriverはModelのaccepted final後、`run.terminal`を保存する前に同じ`process.exec`のauthorization、direct process runner、明示environment、workspace scope、Runのcontrol/deadline/capture budgetを用いて一度だけ実行する。これはmodel Tool callでもextension hookでもなく、history itemを追加しない。host Actionは既存の`kind=verification`, `name=process.exec`で記録され、Attemptとstdout/stderrのsealed EvidenceをAction ID、Attempt ID、Evidence IDで結び付ける。exit code 0かつcapture completeの場合だけ`passed`。既知のnonzero exit、timeout、cancel、incomplete captureは`failed`。process/result persistenceが不明な場合、または再起動時にdispatch後のendがない場合は`unknown`にして再送せず、unexecuted planは`not_run`にする。COREはTask admission時に固定したcriteria revision、accepted child ID、passed、genuine Evidenceを照合し、報告文や以前のTool成功を検証結果にしない。
+
+このplanをterminal hookへ移さない。`extensions.hooks.run_terminal`は既存の続行専用contractのままで、commandを実行しない。
+
 ## 2. AGENTS.mdの探索
 
 config.extensions.enabled=trueかつworkspaceの実rootがextensions.trusted_workspace_rootsに**完全一致**した場合だけinstruction資産として探索する。`.git`の有無やファイルが存在することはtrustの証拠にしない。falseの場合、通常file.readでdataとして読める範囲は残すが、system/developerへ自動昇格しない。

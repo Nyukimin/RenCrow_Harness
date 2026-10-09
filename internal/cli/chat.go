@@ -486,7 +486,7 @@ func (c *chat) ended(runID string) {
 	case shown != "":
 		fmt.Fprintln(c.out)
 	}
-	c.say("[run %s ended %s %s (verification: %s)]", res.RunID, res.Status, res.Code, res.Verification.Status)
+	c.say("[run %s ended %s %s (verification: %s)]", res.RunID, res.Status, res.Code, verificationSummary(res.Verification))
 	if c.leaving {
 		c.leaveStatus = res.Status
 	}

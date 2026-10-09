@@ -40,14 +40,23 @@ func (e *env) resumeAdm(epoch int64, reconciled map[string]string) ResumeAdmissi
 		Admission:      adm,
 		BindingAllowed: func(b protocol.Binding) bool { return b.Selector == "fixture-local" },
 		Reconciled:     reconciled,
-		// The classification of an unknown generation, as the kernel's: blocked, resumable,
-		// the unknown generations' Actions unresolved.
+		// The same classification used by the kernel for an unresolved generation or
+		// fixed verifier; the Run is blocked and keeps each unresolved Action visible.
 		EndsOnUnknownGeneration: func(st StaleRun) (TerminalInput, error) {
-			res := protocol.RunResult{RunID: st.RunID, TaskID: st.TaskID, Status: "blocked", Code: "MODEL_GENERATION_OUTCOME_UNKNOWN",
-				Verification: protocol.Verification{Status: "not_run", EvidenceIDs: []string{}}, EvidenceIDs: st.EvidenceIDs, Resumable: true, UnresolvedActionIDs: []string{}}
+			code := "EFFECT_OUTCOME_UNKNOWN"
+			if len(st.Unresolved) > 0 {
+				code = "MODEL_GENERATION_OUTCOME_UNKNOWN"
+			}
+			verification := protocol.Verification{Status: "not_run", EvidenceIDs: []string{}}
+			if st.Verification != nil {
+				verification = *st.Verification
+			}
+			res := protocol.RunResult{RunID: st.RunID, TaskID: st.TaskID, Status: "blocked", Code: code,
+				Verification: verification, EvidenceIDs: st.EvidenceIDs, Resumable: true, UnresolvedActionIDs: []string{}}
 			for _, u := range st.Unresolved {
 				res.UnresolvedActionIDs = append(res.UnresolvedActionIDs, u.ActionID)
 			}
+			res.UnresolvedActionIDs = append(res.UnresolvedActionIDs, st.UnresolvedTools...)
 			return TerminalInput{Result: res, ResultEvidenceID: identity.NewEvidenceID().String()}, nil
 		},
 	}

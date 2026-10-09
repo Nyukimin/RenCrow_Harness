@@ -376,7 +376,7 @@ func (s *Store) StartToolAttempt(ctx context.Context, f Fence, in StartToolInput
 func (s *Store) RecordProcessStart(ctx context.Context, f Fence, attemptID, hostIncarnation, token string) error {
 	return s.fencedWrite(ctx, f, false, func(tx *sql.Tx, _ time.Time, _ threadRow, _ runRow, _ startRecord) error {
 		r, err := tx.ExecContext(ctx, `UPDATE attempts SET state=?, host_incarnation=?, process_token=?
-			WHERE attempt_id=? AND state=? AND action_id IN (SELECT action_id FROM actions WHERE run_id=? AND kind='tool')`,
+			WHERE attempt_id=? AND state=? AND action_id IN (SELECT action_id FROM actions WHERE run_id=? AND kind IN ('tool','verification'))`,
 			ToolRunning, hostIncarnation, token, attemptID, ToolDispatched, f.RunID)
 		if err != nil {
 			return fmt.Errorf("sqlite: record process start: %w", mapSQLiteError(err))
@@ -405,7 +405,21 @@ type CaptureChunk struct {
 // and never presented as complete.
 func (s *Store) AppendCaptureChunk(ctx context.Context, f Fence, c CaptureChunk) error {
 	return s.fencedWrite(ctx, f, false, func(tx *sql.Tx, _ time.Time, th threadRow, _ runRow, _ startRecord) error {
-		if c.Purpose != PurposeToolStdout && c.Purpose != PurposeToolStderr {
+		var actionKind string
+		if err := tx.QueryRowContext(ctx, `SELECT ac.kind FROM attempts a JOIN actions ac ON ac.action_id=a.action_id
+			WHERE a.attempt_id=? AND ac.run_id=?`, c.AttemptID, f.RunID).Scan(&actionKind); errors.Is(err, sql.ErrNoRows) {
+			return protocol.NewError(protocol.CodeIntegrityBlocked, "a process capture does not belong to this run")
+		} else if err != nil {
+			return fmt.Errorf("sqlite: find process capture action: %w", mapSQLiteError(err))
+		}
+		purposeKind := ""
+		switch c.Purpose {
+		case PurposeToolStdout, PurposeToolStderr:
+			purposeKind = "tool"
+		case PurposeVerificationStdout, PurposeVerificationStderr:
+			purposeKind = "verification"
+		}
+		if purposeKind == "" || purposeKind != actionKind {
 			return protocol.NewError(protocol.CodeInternal, "a capture chunk has a purpose that is not a capture")
 		}
 		if c.Ordinal == 0 {
@@ -641,7 +655,7 @@ func (s *Store) CompleteToolAttempt(ctx context.Context, f Fence, in CompleteToo
 func (s *Store) RunCaptureBytes(ctx context.Context, runID string) (int64, error) {
 	var n int64
 	err := s.db.QueryRowContext(ctx, `SELECT COALESCE(SUM(total_bytes),0) FROM evidence WHERE run_id=? AND state='sealed'
-		AND json_extract(metadata_json,'$.purpose') IN (?,?)`, runID, PurposeToolStdout, PurposeToolStderr).Scan(&n)
+		AND json_extract(metadata_json,'$.purpose') IN (?,?,?,?)`, runID, PurposeToolStdout, PurposeToolStderr, PurposeVerificationStdout, PurposeVerificationStderr).Scan(&n)
 	if err != nil {
 		return 0, wrapRead("count captured bytes", err)
 	}
@@ -936,7 +950,7 @@ func (s *Store) StaleToolAttemptsFor(ctx context.Context, threadID string, epoch
 	var out []ToolAttemptRef
 	for _, id := range ids {
 		rows, err := s.db.QueryContext(ctx, `SELECT a.action_id, a.attempt_id, ac.name, a.state, COALESCE(a.host_incarnation,''), COALESCE(a.process_token,'')
-			FROM attempts a JOIN actions ac ON ac.action_id=a.action_id WHERE ac.run_id=? AND ac.kind='tool' AND a.state IN (?,?) ORDER BY a.started_at, a.attempt_id`,
+			FROM attempts a JOIN actions ac ON ac.action_id=a.action_id WHERE ac.run_id=? AND ac.kind IN ('tool','verification') AND a.state IN (?,?) ORDER BY a.started_at, a.attempt_id`,
 			id, ToolDispatched, ToolRunning)
 		if err != nil {
 			return nil, fmt.Errorf("sqlite: list stale tool attempts: %w", mapSQLiteError(err))

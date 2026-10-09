@@ -43,6 +43,10 @@ Gateway不在でもinspect/原本読取は利用可能。生成capabilityだけu
 
 policy_refはhost管理registryから解決し、path、Tool名、実行mode、process profile、時間/出力上限を含む。structured_onlyはprocess.execを非公開/拒否。trusted_hostは許可された実行fileとargv_prefixに限定するが、そのprogramの全振る舞いをsandboxしたとは言わない。isolatedは対応するadapter evidenceがない限りunavailable。
 
+Policyには任意の`verification`固定planを置ける。fieldとgrant条件は[HOST_ASSETS §1](HOST_ASSETS.md#1-policy_ref-registry)を正本とし、registry schemaの未知fieldは拒否する。planなしのpolicyは従来どおりで、effective policy revisionの既存canonical bytesも変わらない。
+
+`rencrow-harness verification-digest --config <absolute-path> --policy-ref <id> --workspace <absolute-path> --mode trusted_host`は、実効planの`criteria_revision`だけをJSONで出力する。owner CLIはDBを開かず、argv・environment値・workspace pathを出力しない。COREはTask admission時にこの値を固定し、RunResultの実測criteriaと照合する。現行host設定から古いTaskの期待値を自動更新しない。
+
 ren operatorがCORE由来のSessionを引き継ぐ場合、controllable_session_ownersにそのownerを明記し、旧clientがwriterを解放するまでBUSY。所有不明processのkillやTTLだけの乗取りをしない。
 
 OS固有supervisorは標準runtimeの必須ではない。COREが子processを起動する場合は固定binary/config pathを使い、shell文字列で組み立てない。常駐service化をするdeploymentでは既存の予約PORT/owner/supervisor規約を適用するが、stdio標準自体はlistener PORTを持たない。
