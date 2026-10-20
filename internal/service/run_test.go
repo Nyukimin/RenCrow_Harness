@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -379,6 +380,36 @@ func TestASecondTurnSeesTheFirst(t *testing.T) {
 	// A stale expected revision is refused as it always was.
 	_, err := r.call("turn/start", startParams(info.ThreadID, "two.start.0000000000003", "three"))
 	wantCode(t, err, protocol.CodeRevisionConflict)
+}
+
+func TestAnOversizedGrantedToolDescriptionBlocksBeforeGeneration(t *testing.T) {
+	fake := harnesstest.NewFake()
+	executable, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := newModelRig(t, fake, nil, func(layout *harnesstest.Layout) {
+		policy := layout.Reg["policies"].([]any)[0].(map[string]any)
+		policy["tools"] = []any{"process.exec"}
+		policy["process_profiles"] = []any{"oversized"}
+		policy["env_profiles"] = []any{"clean"}
+		layout.Cfg["process_profiles"] = []any{map[string]any{
+			"name": "oversized", "executable": executable, "is_shell": false,
+			"argv_prefix": []any{strings.Repeat("x", 4096), strings.Repeat("y", 4096), strings.Repeat("z", 4096)},
+		}}
+	})
+
+	info := r.openSession("oversized.open.0000000001")
+	run := r.waitTerminal(r.startRun(info.ThreadID, "oversized.start.0000001", "do it").RunID)
+	if run.Result.Status != "blocked" || run.Result.Code != "UNSUPPORTED_CONTRACT" {
+		t.Fatalf("oversized granted Tool description result: %+v", run.Result)
+	}
+	if len(fake.Generates()) != 0 || len(fake.Measures()) != 0 || run.GenerationAttemptsUsed != 0 {
+		t.Fatalf("the Run reached model execution: describes=%d measures=%d generates=%d attempts=%d", fake.Describes(), len(fake.Measures()), len(fake.Generates()), run.GenerationAttemptsUsed)
+	}
+	if r.val("SELECT COUNT(*) FROM actions WHERE kind='tool'") != "0" || r.val("SELECT COUNT(*) FROM tool_links") != "0" {
+		t.Fatal("an oversized Tool declaration was dispatched")
+	}
 }
 
 type outcomeCase struct {

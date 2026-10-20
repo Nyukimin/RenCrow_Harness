@@ -3,6 +3,7 @@ package tools
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -123,6 +124,93 @@ func TestEveryDeclarationIsTheDesignSchemaAndAValidFunctionTool(t *testing.T) {
 	}
 	if _, ok := SchemaRevision("file.rename"); ok {
 		t.Fatal("a revision for a Tool that does not exist")
+	}
+}
+
+func TestProcessExecDescriptionShowsOnlyTheRunProfilesDeterministically(t *testing.T) {
+	makePolicy := func(reverse bool) *RunPolicy {
+		processes := []config.ProcessProfile{
+			{Name: "git-add", Executable: "/usr/bin/git", ArgvPrefix: []string{"add"}},
+			{Name: "git-status", Executable: "/usr/bin/git", ArgvPrefix: []string{"status"}},
+			{Name: "ungranted", Executable: "/usr/bin/unsafe", ArgvPrefix: []string{"--all"}},
+		}
+		envs := []config.EnvProfile{
+			{Name: "git-local", Values: map[string]string{"GIT_COMMITTER_NAME": "private-committer", "GIT_COMMITTER_EMAIL": "secret@example.invalid"}},
+			{Name: "clean", Values: map[string]string{}},
+			{Name: "ungranted-env", Values: map[string]string{"TOKEN": "private-token-value"}},
+		}
+		processNames := []string{"git-status", "git-add"}
+		envNames := []string{"git-local", "clean"}
+		if reverse {
+			slices.Reverse(processes)
+			slices.Reverse(envs)
+			slices.Reverse(processNames)
+			slices.Reverse(envNames)
+		}
+		return newRunPolicy(config.EffectivePolicy{
+			Policy: config.Policy{
+				ID: "git-policy", AllowedModes: []string{"structured_only", "trusted_host"},
+				Tools: []string{ProcessExec}, ProcessProfiles: processNames, EnvProfiles: envNames,
+			},
+			ProcessProfiles: processes, EnvProfiles: envs, WorkspaceRoot: "/ws", Mode: "trusted_host", Revision: "rev-git",
+		})
+	}
+
+	cat, err := makePolicy(false).Catalog()
+	if err != nil || len(cat) != 1 || cat[0].Function.Name != ProcessExec {
+		t.Fatalf("%v %v", cat, err)
+	}
+	description := cat[0].Function.Description
+	wantLines := []string{
+		`"git-add": executable="/usr/bin/git", is_shell=false, argv_prefix=["add"]`,
+		`"git-status": executable="/usr/bin/git", is_shell=false, argv_prefix=["status"]`,
+		`Allowed env_profile_ref names: ["clean","git-local"].`,
+	}
+	last := -1
+	for _, want := range wantLines {
+		at := strings.Index(description, want)
+		if at < 0 || at <= last {
+			t.Fatalf("description is missing or misordering %q:\n%s", want, description)
+		}
+		last = at
+	}
+	for _, forbidden := range []string{"ungranted", "unsafe", "TOKEN", "private-token-value", "private-committer", "secret@example.invalid"} {
+		if strings.Contains(description, forbidden) {
+			t.Fatalf("description exposed an ungranted profile or environment value %q:\n%s", forbidden, description)
+		}
+	}
+	again, err := makePolicy(true).Catalog()
+	if err != nil || len(again) != 1 || again[0].Function.Description != description {
+		t.Fatalf("description depends on profile input order:\n%s\n%s (%v)", description, func() string {
+			if len(again) == 0 {
+				return ""
+			}
+			return again[0].Function.Description
+		}(), err)
+	}
+	structured, err := policy("structured_only", nil).Catalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range structured {
+		if tool.Function.Name == ProcessExec {
+			t.Fatalf("structured_only exposed process.exec: %v", structured)
+		}
+	}
+}
+
+func TestCatalogRejectsProcessExecDescriptionOverFunctionToolSchemaLimit(t *testing.T) {
+	longArg := strings.Repeat("x", 4096)
+	p := policy("trusted_host", func(ep *config.EffectivePolicy) {
+		ep.ProcessProfiles = []config.ProcessProfile{{
+			Name: "large-prefix", Executable: "/usr/bin/git", ArgvPrefix: []string{longArg, longArg, longArg},
+		}}
+		ep.Policy.ProcessProfiles = []string{"large-prefix"}
+	})
+
+	cat, err := p.Catalog()
+	if err == nil || cat != nil || !strings.Contains(err.Error(), "8192") {
+		t.Fatalf("Catalog() returned %d declarations and error %v, want no declarations and an explicit 8192-character limit error", len(cat), err)
 	}
 }
 

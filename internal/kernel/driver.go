@@ -653,6 +653,9 @@ func (d *Driver) actRequest(rs *runState, msgs []modelport.ChatMessage, recovery
 	if rs.pol != nil {
 		var err error
 		if offered, err = rs.pol.Catalog(); err != nil {
+			if errors.Is(err, tools.ErrCatalogTooLarge) {
+				return modelport.ChatRequest{}, err
+			}
 			return modelport.ChatRequest{}, errOffered
 		}
 	}

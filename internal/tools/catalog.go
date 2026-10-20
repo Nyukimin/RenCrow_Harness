@@ -11,12 +11,16 @@ package tools
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
+	"unicode/utf8"
 
 	harness "github.com/Nyukimin/RenCrow_Harness"
 	"github.com/Nyukimin/RenCrow_Harness/internal/canon"
+	"github.com/Nyukimin/RenCrow_Harness/internal/config"
 	"github.com/Nyukimin/RenCrow_Harness/internal/modelport"
 	"github.com/Nyukimin/RenCrow_Harness/internal/strictjson"
 )
@@ -29,7 +33,13 @@ const (
 	FileEdit     = "file.edit"
 	ProcessExec  = "process.exec"
 	EvidenceRead = "evidence.read"
+
+	maxFunctionToolDescriptionLength = 8192
 )
+
+// ErrCatalogTooLarge marks a Run-specific Tool declaration that exceeds the
+// function-tool schema's description limit.
+var ErrCatalogTooLarge = errors.New("tools: catalog description exceeds the function-tool schema limit")
 
 // AllTools lists the six built-in Tools in catalog order.
 func AllTools() []string {
@@ -44,7 +54,8 @@ var descriptions = map[string]string{
 	FileCreate: "Create a new UTF-8 file in an existing directory of the workspace. It fails with ALREADY_EXISTS if the path is taken; expected_absent must be true. No directory is created.",
 	FileEdit: "Replace one exact occurrence of old_text in a file with new_text. expected_hash must be the raw_hash of the file as it is now (from file.read). " +
 		"It fails if the hash differs or if old_text does not occur exactly once; there is no fuzzy matching and no line-number correction.",
-	ProcessExec: "Run a program directly, without a shell. executable is an absolute path and argv its arguments (not including the program itself). " +
+	ProcessExec: "Run a program using a host-approved process profile. is_shell=true identifies a host-declared shell executable; argv is passed directly and is never automatically wrapped in a shell. " +
+		"executable is an absolute path and argv its arguments (not including the program itself). " +
 		"Only programs and argument prefixes the host's policy lists will run. cwd is a workspace-relative directory, env_profile_ref names an environment profile, " +
 		"and the program gets only that profile's variables. Output is stored as Evidence: read it with evidence.read.",
 	EvidenceRead: "Read a byte range (at most 65536 bytes) of stored Evidence of this work, for example the output of an earlier call. " +
@@ -134,9 +145,64 @@ func (p *RunPolicy) Catalog() ([]modelport.FunctionTool, error) {
 	out := []modelport.FunctionTool{}
 	for _, name := range p.Names() {
 		s := m[name]
+		description := descriptionFor(p, name)
+		if utf8.RuneCountInString(description) > maxFunctionToolDescriptionLength {
+			return nil, fmt.Errorf("%w: %s description exceeds the %d-character limit", ErrCatalogTooLarge, name, maxFunctionToolDescriptionLength)
+		}
 		out = append(out, modelport.FunctionTool{Type: "function", Function: modelport.ToolDeclaration{
-			Name: name, Description: descriptions[name], Parameters: slices.Clone(s.parameters), Strict: true,
+			Name: name, Description: description, Parameters: slices.Clone(s.parameters), Strict: true,
 		}})
 	}
 	return out, nil
+}
+
+// descriptionFor adds the frozen, Run-specific authority that helps the model form a
+// process.exec call. It lists only granted profile definitions and names. In particular,
+// environment values stay on the host and never enter the model request.
+func descriptionFor(p *RunPolicy, name string) string {
+	if name != ProcessExec {
+		return descriptions[name]
+	}
+	var b strings.Builder
+	b.WriteString(descriptions[ProcessExec])
+	b.WriteString("\n\nProcess profiles allowed for this Run (argv must start with the listed argv_prefix):")
+
+	allowedProcessNames := make(map[string]struct{}, len(p.policy.ProcessProfiles))
+	for _, name := range p.policy.ProcessProfiles {
+		allowedProcessNames[name] = struct{}{}
+	}
+	profiles := make([]config.ProcessProfile, 0, len(allowedProcessNames))
+	seen := make(map[string]struct{}, len(allowedProcessNames))
+	for _, profile := range p.processes {
+		if _, allowed := allowedProcessNames[profile.Name]; !allowed {
+			continue
+		}
+		if _, exists := seen[profile.Name]; exists {
+			continue
+		}
+		seen[profile.Name] = struct{}{}
+		profiles = append(profiles, profile)
+	}
+	slices.SortFunc(profiles, func(a, b config.ProcessProfile) int { return strings.Compare(a.Name, b.Name) })
+	if len(profiles) == 0 {
+		b.WriteString("\n- none")
+	} else {
+		for _, profile := range profiles {
+			nameJSON, _ := json.Marshal(profile.Name)
+			executableJSON, _ := json.Marshal(profile.Executable)
+			argvPrefixJSON, _ := json.Marshal(profile.ArgvPrefix)
+			fmt.Fprintf(&b, "\n- %s: executable=%s, is_shell=%t, argv_prefix=%s", nameJSON, executableJSON, profile.IsShell, argvPrefixJSON)
+		}
+	}
+
+	allowedEnvNames := make([]string, 0, len(p.envs))
+	for name := range p.envs {
+		if slices.Contains(p.policy.EnvProfiles, name) {
+			allowedEnvNames = append(allowedEnvNames, name)
+		}
+	}
+	slices.Sort(allowedEnvNames)
+	envNamesJSON, _ := json.Marshal(allowedEnvNames)
+	fmt.Fprintf(&b, "\nAllowed env_profile_ref names: %s.", envNamesJSON)
+	return b.String()
 }
